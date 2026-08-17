@@ -1,0 +1,83 @@
+# Environment files (NEVER commit secrets/credentials)
+.env
+.env.*
+.env.backup
+.env.production
+*.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies
+/node_modules/
+/vendor/
+**/node_modules/
+**/vendor/
+
+# Archives & Large files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Laravel cache & keys
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+/storage/*.key
+/storage/app/*
+!/storage/app/.gitignore
+!/storage/app/public
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+!/storage/logs/.gitignore
+!/storage/framework/.gitignore
+
+# Server & cPanel internal files
+.cagefs/
+.caldav/
+.cl.selector/
+.clwpos/
+.cpanel/
+.htpasswds/
+.koality/
+.razor/
+.sitepad/
+.softaculous/
+.spamassassin/
+.subaccounts/
+.trash/
+access-logs/
+logs/
+mail/
+tmp/
+etc/
+ssl/
+cpanel3-skel/
+public_ftp/
+www/
+.bashrc
+.bash_logout
+.bash_profile
+.lastlogin
+.imunify_patch_id
+.myimunify_id
+.spamassassinboxenable
+.spamassassinenable
+.cloud-locale-test.skip
+.wp-toolkit-identifier
+.gemrc
+
+# Logs
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
