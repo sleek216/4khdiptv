@@ -34,6 +34,15 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
+    public function markAllRead(): RedirectResponse
+    {
+        User::where('is_admin', false)->whereNull('admin_seen_at')->update(['admin_seen_at' => now()]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'All users marked as read.');
+    }
+
     public function show(User $user): View
     {
         $user->load(['orders.package']);

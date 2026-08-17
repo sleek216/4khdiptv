@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payout;
 use App\Models\Referral;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class AdminSidebarCounts
@@ -27,11 +28,18 @@ class AdminSidebarCounts
         try {
             if (Schema::hasTable('orders')) {
                 $counts['orders'] = Order::where('is_read', false)->count();
+                $counts['expiring_orders'] = Order::whereNotNull('expires_at')
+                    ->where('expires_at', '>=', now())
+                    ->where('expires_at', '<=', now()->addDays(3))
+                    ->count();
             }
 
             if (Schema::hasTable('users')) {
                 $counts['users'] = User::where('is_admin', false)
-                    ->where('created_at', '>=', now()->subDays(7))
+                    ->where(function ($q) {
+                        $q->whereNull('admin_seen_at')
+                          ->orWhere('created_at', '>', DB::raw('COALESCE(admin_seen_at, "1970-01-01")'));
+                    })
                     ->count();
             }
 

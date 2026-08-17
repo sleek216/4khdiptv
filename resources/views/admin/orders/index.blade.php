@@ -153,9 +153,27 @@
                                     {{ $order->payment_status ?? '—' }}
                                 </span>
                             </td>
-                            <td style="color: var(--xai-text-muted); font-size: 12px;">
-                                {{ $order->created_at->format('Y.m.d') }}
-                                <div style="font-size: 11px; color: var(--xai-text-disabled);">{{ $order->created_at->format('H:i:s') }} UTC</div>
+                            <td>
+                                <div style="font-size: 12px; color: var(--xai-text-primary); font-weight: 500;">
+                                    {{ $order->created_at->format('M d, Y') }}
+                                </div>
+                                @if($order->expires_at)
+                                    @php
+                                        $isExp = $order->expires_at->isPast();
+                                        $isSoon = !$isExp && $order->expires_at->diffInDays(now()) <= 3;
+                                    @endphp
+                                    <div style="font-size: 11px; margin-top: 2px;">
+                                        @if($isExp)
+                                            <span style="color: #ef4444; font-weight: 700;">Expired ({{ $order->expires_at->format('M d') }})</span>
+                                        @elseif($isSoon)
+                                            <span style="color: #d97706; font-weight: 700;">Expiring in {{ $order->expires_at->diffForHumans(null, true) }}</span>
+                                        @else
+                                            <span style="color: #059669;">Exp: {{ $order->expires_at->format('M d, Y') }}</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div style="font-size: 11px; color: var(--xai-text-muted);">Lifetime / Trial</div>
+                                @endif
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">

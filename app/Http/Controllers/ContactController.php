@@ -38,6 +38,13 @@ class ContactController extends Controller
         // Create contact record
         $contact = Contact::create($validated);
 
+        // Real-Time Outgoing Webhooks (Discord, Telegram, Custom)
+        try {
+            \App\Services\WebhookNotificationService::notifyNewContact($contact);
+        } catch (\Throwable $e) {
+            Log::warning('Webhook contact notification error: ' . $e->getMessage());
+        }
+
         try {
             $adminEmail = Setting::get('admin_notification_email')
                 ?: config('mail.from.address');

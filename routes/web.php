@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\ContactController as AdminContactController;
 use App\Http\Controllers\Admin\BlogController as AdminBlogController;
 use App\Http\Controllers\Admin\SystemExportController as AdminSystemExportController;
+use App\Http\Controllers\Admin\LiveHeartbeatController as AdminLiveHeartbeatController;
 use App\Http\Controllers\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
@@ -175,6 +176,9 @@ Route::prefix('admin')->middleware(['admin', 'admin.module'])->name('admin.')->g
     Route::resource('countries', AdminCountryController::class);
     Route::post('countries/{country}/toggle-active', [AdminCountryController::class, 'toggleActive'])->name('countries.toggle-active');
 
+    // Real-Time Live Heartbeat API
+    Route::get('api/live-heartbeat', [AdminLiveHeartbeatController::class, 'heartbeat'])->name('api.live-heartbeat');
+
     // Settings
     Route::get('settings', [AdminSettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [AdminSettingsController::class, 'update'])->name('settings.update');
@@ -186,7 +190,13 @@ Route::prefix('admin')->middleware(['admin', 'admin.module'])->name('admin.')->g
     Route::get('settings/nowpayments', [AdminSettingsController::class, 'nowpayments'])->name('settings.nowpayments');
     Route::put('settings/nowpayments', [AdminSettingsController::class, 'updateNowpayments'])->name('settings.update-nowpayments');
     Route::post('settings/nowpayments/test', [AdminSettingsController::class, 'testNowpayments'])->name('settings.test-nowpayments');
-    Route::get('settings/backup', [AdminSettingsController::class, 'exportBackup'])->name('settings.backup');
+    Route::get('settings/backup', [AdminSettingsController::class, 'backup'])->name('settings.backup');
+    Route::put('settings/backup', [AdminSettingsController::class, 'updateBackup'])->name('settings.update-backup');
+    Route::post('settings/backup/send-email-now', [AdminSettingsController::class, 'sendBackupEmailNow'])->name('settings.backup.send-email-now');
+    Route::get('settings/backup/download-csv', [AdminSettingsController::class, 'downloadBackupCsv'])->name('settings.backup.download-csv');
+    Route::get('settings/webhooks', [AdminSettingsController::class, 'webhooks'])->name('settings.webhooks');
+    Route::put('settings/webhooks', [AdminSettingsController::class, 'updateWebhooks'])->name('settings.update-webhooks');
+    Route::post('settings/webhooks/test', [AdminSettingsController::class, 'testWebhooks'])->name('settings.test-webhooks');
 
     // Coupons Management
     Route::resource('coupons', AdminCouponController::class);

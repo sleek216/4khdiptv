@@ -21,6 +21,12 @@
         <a href="{{ route('admin.settings.email') }}" class="xai-tab {{ request()->routeIs('admin.settings.email') ? 'active' : '' }}">
             <span>Email</span>
         </a>
+        <a href="{{ route('admin.settings.backup') }}" class="xai-tab {{ request()->routeIs('admin.settings.backup') ? 'active' : '' }}">
+            <span>Backup &amp; Export</span>
+        </a>
+        <a href="{{ route('admin.settings.webhooks') }}" class="xai-tab {{ request()->routeIs('admin.settings.webhooks') ? 'active' : '' }}">
+            <span>Webhooks</span>
+        </a>
     </div>
 
     <div class="row g-4">

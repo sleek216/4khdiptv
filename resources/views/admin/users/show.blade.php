@@ -139,39 +139,70 @@
                     <table class="xai-table">
                         <thead>
                             <tr>
-                                <th class="ps-4">ORDER ID</th>
-                                <th>PACKAGE</th>
+                                <th class="ps-4">ORDER NO.</th>
+                                <th>PACKAGE &amp; DURATION</th>
                                 <th>AMOUNT</th>
+                                <th>BOUGHT AT</th>
+                                <th>EXPIRY DATE</th>
                                 <th>STATUS</th>
-                                <th>DATE</th>
                                 <th class="text-end pe-4">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($user->orders as $order)
+                                @php
+                                    $isExpired = $order->expires_at && $order->expires_at->isPast();
+                                    $isExpiringSoon = $order->expires_at && !$isExpired && $order->expires_at->diffInDays(now()) <= 3;
+                                @endphp
                                 <tr class="align-middle">
                                     <td class="ps-4">
-                                        <div style="font-family: var(--font-display); font-size: 12px; color: var(--xai-text-primary);">{{ $order->order_number }}</div>
+                                        <div style="font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--xai-text-primary);">
+                                            {{ $order->order_number }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--xai-text-muted);">{{ strtoupper($order->payment_method ?? 'N/A') }}</div>
                                     </td>
-                                    <td style="font-weight: 400; color: var(--xai-text-primary);">{{ $order->package->name ?? 'NULL' }}</td>
-                                    <td style="font-family: var(--font-display); font-weight: 400; color: var(--xai-text-primary);">${{ number_format($order->amount, 2) }}</td>
                                     <td>
-                                        <span style="font-family: var(--font-display); font-size: 11px; padding: 4px 8px; border: 1px solid var(--xai-border-strong); color: var(--xai-text-secondary); letter-spacing: 1px;">
-                                            {{ strtoupper($order->order_status) }}
-                                        </span>
+                                        <div style="font-weight: 600; color: var(--xai-text-primary);">{{ $order->package->name ?? 'Custom Plan' }}</div>
+                                        <div style="font-size: 11px; color: var(--xai-text-muted);">{{ $order->package->duration_label ?? 'Standard Duration' }}</div>
                                     </td>
-                                    <td style="font-size: 12px; color: var(--xai-text-secondary); font-family: var(--font-display);">{{ $order->created_at->format('Y-m-d') }}</td>
+                                    <td style="font-family: var(--font-display); font-weight: 700; color: #059669;">${{ number_format($order->amount, 2) }}</td>
+                                    <td style="font-size: 12px; color: var(--xai-text-secondary); font-family: var(--font-display);">
+                                        {{ $order->created_at->format('M d, Y • h:i A') }}
+                                    </td>
+                                    <td style="font-size: 12px; font-family: var(--font-display);">
+                                        @if($order->expires_at)
+                                            <div style="font-weight: 600; color: {{ $isExpired ? '#ef4444' : ($isExpiringSoon ? '#f59e0b' : '#059669') }};">
+                                                {{ $order->expires_at->format('M d, Y • h:i A') }}
+                                            </div>
+                                            <div style="font-size: 10px; color: var(--xai-text-muted);">
+                                                {{ $isExpired ? 'Expired ' . $order->expires_at->diffForHumans() : 'Expires in ' . $order->expires_at->diffForHumans(null, true) }}
+                                            </div>
+                                        @else
+                                            <span style="color: var(--xai-text-muted); font-size: 11px;">Lifetime / Open</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($isExpired)
+                                            <span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #fee2e2; color: #dc2626; font-weight: 700;">EXPIRED</span>
+                                        @elseif($isExpiringSoon)
+                                            <span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #fef3c7; color: #d97706; font-weight: 700;">EXPIRING SOON</span>
+                                        @elseif($order->order_status === 'completed')
+                                            <span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #dcfce7; color: #15803d; font-weight: 700;">ACTIVE</span>
+                                        @else
+                                            <span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: 700;">{{ strtoupper($order->order_status) }}</span>
+                                        @endif
+                                    </td>
                                     <td class="text-end pe-4">
-                                        <a href="{{ route('admin.orders.show', $order) }}" class="btn-xai-dark" style="padding: 4px 12px; font-size: 11px;" title="View Order">
-                                            VIEW
+                                        <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-sm btn-outline-primary" style="padding: 4px 12px; font-size: 12px; font-weight: 600;" title="View Order">
+                                            View
                                         </a>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-5">
+                                    <td colspan="7" class="text-center py-5">
                                         <div style="color: var(--xai-text-muted);">
-                                            <div style="font-family: var(--font-display); font-size: 12px; letter-spacing: 1px;">NO ORDERS FOUND</div>
+                                            <div style="font-family: var(--font-display); font-size: 13px; letter-spacing: 1px;">NO SUBSCRIPTIONS OR ORDERS FOUND</div>
                                         </div>
                                     </td>
                                 </tr>

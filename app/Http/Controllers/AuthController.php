@@ -158,6 +158,13 @@ class AuthController extends Controller
         $affiliateService = app(\App\Services\AffiliateService::class);
         $affiliateService->ensureAffiliateSetup($user);
 
+        // Real-Time Outgoing Webhooks (Discord, Telegram, Custom)
+        try {
+            \App\Services\WebhookNotificationService::notifyNewUser($user);
+        } catch (\Throwable $e) {
+            \Log::warning('Webhook user notification error: ' . $e->getMessage());
+        }
+
         Auth::login($user);
 
         return redirect()

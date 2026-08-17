@@ -102,13 +102,22 @@ class AppServiceProvider extends ServiceProvider
             }
 
             // Share admin sidebar notification counts
-            \Illuminate\Support\Facades\View::composer('admin.layouts.app', function ($view) {
+            \Illuminate\Support\Facades\View::composer(['admin.*', 'admin.layouts.app'], function ($view) {
                 $counts = \App\Support\AdminSidebarCounts::get();
+                $ordersCount = (int) ($counts['orders'] ?? 0);
+                $contactsCount = (int) ($counts['contacts'] ?? 0);
+                $usersCount = (int) ($counts['users'] ?? 0);
+                $affiliatesCount = (int) ($counts['affiliate_total'] ?? 0);
 
                 $view->with([
                     'adminCounts' => $counts,
-                    'unreadOrdersCount' => $counts['orders'],
-                    'unreadContactsCount' => $counts['contacts'],
+                    'adminUnreadOrdersCount' => $ordersCount,
+                    'adminUnreadContactsCount' => $contactsCount,
+                    'adminUnreadUsersCount' => $usersCount,
+                    'adminUnreadAffiliatesCount' => $affiliatesCount,
+                    'adminTotalNotificationsCount' => ($ordersCount + $contactsCount + $affiliatesCount),
+                    'unreadOrdersCount' => $ordersCount,
+                    'unreadContactsCount' => $contactsCount,
                 ]);
             });
         } catch (\Exception $e) {

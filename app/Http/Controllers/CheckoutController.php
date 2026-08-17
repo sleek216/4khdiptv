@@ -122,9 +122,30 @@ class CheckoutController extends Controller
             $appliedCoupon = \App\Models\Coupon::active()->where('code', $couponCode)->first();
             if ($appliedCoupon && $appliedCoupon->isValid()) {
                 $discountAmount = $appliedCoupon->calculateDiscount($package->price);
-                $finalPrice = max(0, $package->price - $discountAmount);
                 $appliedCoupon->incrementUsage();
                 session()->forget('coupon_code'); // Clear after use
+            }
+        }
+
+        // Enforce 1 Free Trial per Email / Account Rule
+        if ($isFreePackage || $finalPrice <= 0) {
+            $alreadyClaimed = Order::where(function ($q) use ($validated) {
+                $q->where('customer_email', $validated['customer_email']);
+                if (auth()->check()) {
+                    $q->orWhere('user_id', auth()->id());
+                }
+            })->where(function ($q) {
+                $q->where('amount', '<=', 0)
+                  ->orWhere('payment_method', 'free')
+                  ->orWhereHas('package', function ($pq) {
+                      $pq->where('price', '<=', 0);
+                  });
+            })->exists();
+
+            if ($alreadyClaimed) {
+                return back()->withInput()->withErrors([
+                    'customer_email' => 'You have already claimed a free trial with this email address. Free trials are limited to 1 per customer. Please select a subscription package to continue.'
+                ]);
             }
         }
 
@@ -152,6 +173,14 @@ class CheckoutController extends Controller
             $affiliateService->applyReferralForUser(auth()->user(), $referralCode);
         }
 
+        // Calculate package expiration date
+        $expiryDate = null;
+        if (!empty($package->duration_months) || !empty($package->duration_days)) {
+            $expiryDate = now();
+            if (!empty($package->duration_months)) $expiryDate->addMonths($package->duration_months);
+            if (!empty($package->duration_days)) $expiryDate->addDays($package->duration_days);
+        }
+
         // Create order
         \Log::info('CheckoutController: Creating order for package ID: ' . $package->id);
         $order = Order::create([
@@ -170,11 +199,20 @@ class CheckoutController extends Controller
             // If price is 0, mark as paid immediately
             'payment_status' => $finalPrice <= 0 ? 'completed' : 'pending',
             'order_status' => $finalPrice <= 0 ? 'pending' : 'pending', // Keep pending for manual review or auto-process
+            'activated_at' => $finalPrice <= 0 ? now() : null,
+            'expires_at' => $expiryDate,
         ]);
 
         // Attach countries if selected
         if (!empty($validated['selected_countries'])) {
             $order->countries()->attach($validated['selected_countries']);
+        }
+
+        // Trigger Instant Real-Time Outgoing Webhooks (Discord, Telegram, Custom)
+        try {
+            \App\Services\WebhookNotificationService::notifyNewOrder($order);
+        } catch (\Throwable $e) {
+            \Log::warning('Webhook notification error: ' . $e->getMessage());
         }
 
         // Notify Admin of new order creation (with fallback to From Address)

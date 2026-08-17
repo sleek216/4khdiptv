@@ -184,6 +184,33 @@
             box-shadow: inset 0 0 0 1px rgba(216, 239, 237, 0.2);
         }
 
+        .sidebar-nav .nav-item .xai-badge,
+        .xai-badge, .nav-badge {
+            background: #ef4444 !important;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+            color: #ffffff !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            padding: 2px 7px !important;
+            border-radius: 10px !important;
+            line-height: 1.2 !important;
+            min-width: 20px !important;
+            height: 18px !important;
+            text-align: center !important;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5) !important;
+            letter-spacing: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-left: auto !important;
+        }
+
+        .sidebar-nav .nav-item.active .xai-badge {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+        }
+
         .sidebar i { font-size: 18px; opacity: 0.95; }
 
         .sidebar-nav {
@@ -652,7 +679,7 @@
                 <a href="{{ route('admin.orders.index') }}" class="nav-item {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                     <i class="ph ph-receipt"></i>
                     <span>Orders</span>
-                    @if(isset($adminUnreadOrdersCount) && $adminUnreadOrdersCount > 0)
+                    @if(!empty($adminUnreadOrdersCount) && $adminUnreadOrdersCount > 0)
                         <span class="xai-badge ms-auto">{{ $adminUnreadOrdersCount }}</span>
                     @endif
                 </a>
@@ -669,20 +696,23 @@
                 <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <i class="ph ph-users-three"></i>
                     <span>Users</span>
-                    @if(isset($adminUnreadUsersCount) && $adminUnreadUsersCount > 0)
-                        <span class="xai-badge ms-auto">{{ $adminUnreadUsersCount }}</span>
+                    @if(!empty($adminUnreadUsersCount) && $adminUnreadUsersCount > 0)
+                        <span class="xai-badge ms-auto" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4);">{{ $adminUnreadUsersCount }}</span>
                     @endif
                 </a>
                 <a href="{{ route('admin.contacts.index') }}" class="nav-item {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}">
                     <i class="ph ph-chat-circle-dots"></i>
                     <span>Messages</span>
-                    @if(isset($adminUnreadContactsCount) && $adminUnreadContactsCount > 0)
+                    @if(!empty($adminUnreadContactsCount) && $adminUnreadContactsCount > 0)
                         <span class="xai-badge ms-auto">{{ $adminUnreadContactsCount }}</span>
                     @endif
                 </a>
                 <a href="{{ route('admin.affiliate.index') }}" class="nav-item {{ request()->routeIs('admin.affiliate.*') ? 'active' : '' }}">
                     <i class="ph ph-handshake"></i>
                     <span>Affiliates</span>
+                    @if(!empty($adminUnreadAffiliatesCount) && $adminUnreadAffiliatesCount > 0)
+                        <span class="xai-badge ms-auto" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);">{{ $adminUnreadAffiliatesCount }}</span>
+                    @endif
                 </a>
 
                 <div class="nav-label">Content</div>
@@ -702,9 +732,9 @@
                 </a>
 
                 <div class="nav-label">System</div>
-                <a href="{{ route('admin.export.system-backup') }}" class="nav-item">
-                    <i class="ph ph-download-simple"></i>
-                    <span>Backup (CSV)</span>
+                <a href="{{ route('admin.settings.backup') }}" class="nav-item {{ request()->routeIs('admin.settings.backup') ? 'active' : '' }}">
+                    <i class="ph ph-database"></i>
+                    <span>Backup &amp; Auto-Export</span>
                 </a>
                 <a href="{{ route('admin.settings.index') }}" class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                     <i class="ph ph-sliders-horizontal"></i>
@@ -747,12 +777,21 @@
                     </div>
                 </div>
 
-                <div class="user-chip">
-                    <div class="d-none d-md-block user-meta text-end">
-                        <strong>{{ auth()->user()->name }}</strong>
-                        <span>Administrator</span>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ route('admin.orders.index') }}" class="position-relative d-inline-flex align-items-center justify-content-center" title="Orders & Notifications" style="width: 40px; height: 40px; background: #fff; border: 1px solid var(--xai-border); border-radius: var(--radius-sm); color: var(--atlas-ink); text-decoration: none;">
+                        <i class="ph ph-bell" style="font-size: 20px;"></i>
+                        @if(!empty($adminTotalNotificationsCount) && $adminTotalNotificationsCount > 0)
+                            <span style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 2px 5px; line-height: 1; border: 2px solid #fff;">{{ $adminTotalNotificationsCount }}</span>
+                        @endif
+                    </a>
+
+                    <div class="user-chip">
+                        <div class="d-none d-md-block user-meta text-end">
+                            <strong>{{ auth()->user()->name }}</strong>
+                            <span>Administrator</span>
+                        </div>
+                        <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
                     </div>
-                    <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
                 </div>
             </header>
 
@@ -776,6 +815,191 @@
             sidebar.classList.toggle('mobile-open', open);
             backdrop.classList.toggle('show', open);
         }
+    </script>
+
+    <!-- Real-Time Live Toast Notification Container -->
+    <div id="liveAdminToastContainer" style="position: fixed; bottom: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; max-width: 380px; width: 100%; pointer-events: none;"></div>
+
+    <style>
+        .live-admin-toast {
+            pointer-events: auto;
+            background: rgba(18, 54, 60, 0.96);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(61, 220, 151, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            color: #fff;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.3s ease;
+        }
+        .live-admin-toast.fade-out {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .pulse-badge {
+            animation: badgePulse 1.8s infinite;
+        }
+        @keyframes badgePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+    </style>
+
+    <script>
+        // Real-Time Live Heartbeat & Auto-Sync Engine
+        (function() {
+            let lastOrderId = null;
+            let lastUserId = null;
+            let lastContactId = null;
+            let isFirstLoad = true;
+
+            // Synthesize notification chime using Web Audio API
+            function playChime() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.55);
+                } catch(e) {}
+            }
+
+            function showToast(title, subtitle, iconHtml, linkUrl) {
+                const container = document.getElementById('liveAdminToastContainer');
+                if (!container) return;
+
+                const toast = document.createElement('div');
+                toast.className = 'live-admin-toast';
+                toast.innerHTML = `
+                    <div style="font-size: 24px; line-height: 1; flex-shrink: 0;">${iconHtml}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px; color: #3DDC97;">${title}</div>
+                        <div style="font-size: 12px; color: #D8EFED; line-height: 1.4; margin-bottom: 6px;">${subtitle}</div>
+                        ${linkUrl ? `<a href="${linkUrl}" style="font-size: 11px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 6px; text-decoration: none; display: inline-block;">View Details &rarr;</a>` : ''}
+                    </div>
+                    <button type="button" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 16px; cursor: pointer; padding: 0 4px;" onclick="this.parentElement.remove()">&times;</button>
+                `;
+
+                container.appendChild(toast);
+                playChime();
+
+                setTimeout(() => {
+                    toast.classList.add('fade-out');
+                    setTimeout(() => toast.remove(), 350);
+                }, 7000);
+            }
+
+            function updateBadge(selector, count, extraClass) {
+                const link = document.querySelector(selector);
+                if (!link) return;
+                let badge = link.querySelector('.xai-badge');
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'xai-badge ms-auto ' + (extraClass || '');
+                        link.appendChild(badge);
+                    }
+                    badge.textContent = count;
+                    badge.classList.add('pulse-badge');
+                } else if (badge) {
+                    badge.remove();
+                }
+            }
+
+            function updateTopbarBell(total) {
+                const bellLink = document.querySelector('header.top-bar a[title="Orders & Notifications"]');
+                if (!bellLink) return;
+                let badge = bellLink.querySelector('span');
+                if (total > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.style.cssText = 'position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 2px 5px; line-height: 1; border: 2px solid #fff;';
+                        bellLink.appendChild(badge);
+                    }
+                    badge.textContent = total;
+                } else if (badge) {
+                    badge.remove();
+                }
+            }
+
+            function pollLiveHeartbeat() {
+                fetch('{{ route('admin.api.live-heartbeat') }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data || data.status !== 'success') return;
+
+                    // Update badges in real time without refreshing
+                    updateBadge('a[href*="/admin/orders"]', data.counts.orders);
+                    updateBadge('a[href*="/admin/users"]', data.counts.users);
+                    updateBadge('a[href*="/admin/contacts"]', data.counts.contacts);
+                    updateBadge('a[href*="/admin/affiliate"]', data.counts.affiliates);
+                    updateTopbarBell(data.counts.total);
+
+                    // Check for new snapshots
+                    const snaps = data.snapshots;
+                    if (!isFirstLoad) {
+                        // 1. New Order Alert
+                        if (snaps.last_order_id && snaps.last_order_id !== lastOrderId && snaps.last_order_info) {
+                            showToast(
+                                `🛒 New Order #${snaps.last_order_info.order_number}`,
+                                `Customer: ${snaps.last_order_info.customer_name} • ${snaps.last_order_info.amount} (${snaps.last_order_info.package_name})`,
+                                '⚡',
+                                `{{ url('/admin/orders') }}/${snaps.last_order_info.id}`
+                            );
+                        }
+
+                        // 2. New Contact Message Alert
+                        if (snaps.last_contact_id && snaps.last_contact_id !== lastContactId && snaps.last_contact_info) {
+                            showToast(
+                                `📩 New Support Inquiry`,
+                                `From: ${snaps.last_contact_info.name} • "${snaps.last_contact_info.subject}"`,
+                                '💬',
+                                `{{ url('/admin/contacts') }}/${snaps.last_contact_info.id}`
+                            );
+                        }
+
+                        // 3. New User Registration Alert
+                        if (snaps.last_user_id && snaps.last_user_id !== lastUserId && snaps.last_user_info) {
+                            showToast(
+                                `👤 New Customer Registered`,
+                                `${snaps.last_user_info.name} (${snaps.last_user_info.email})`,
+                                '✨',
+                                `{{ url('/admin/users') }}/${snaps.last_user_info.id}`
+                            );
+                        }
+                    }
+
+                    // Save snapshot IDs
+                    lastOrderId = snaps.last_order_id;
+                    lastUserId = snaps.last_user_id;
+                    lastContactId = snaps.last_contact_id;
+                    isFirstLoad = false;
+                })
+                .catch(() => {});
+            }
+
+            // Start silent live poller every 6 seconds
+            setInterval(pollLiveHeartbeat, 6000);
+            setTimeout(pollLiveHeartbeat, 800);
+        })();
     </script>
     @stack('scripts')
 </body>

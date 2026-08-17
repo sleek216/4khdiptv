@@ -289,4 +289,111 @@ class SettingsController extends Controller
         </html>';
         exit;
     }
+
+    public function backup(): View
+    {
+        $backupSettings = [
+            'backup_export_email' => Setting::get('backup_export_email', Setting::get('admin_notification_email', '')),
+            'backup_export_frequency_days' => Setting::get('backup_export_frequency_days', '30'),
+            'backup_export_enabled' => Setting::get('backup_export_enabled', '1'),
+            'backup_export_last_sent_at' => Setting::get('backup_export_last_sent_at'),
+        ];
+
+        $stats = [
+            'total_users' => \App\Models\User::count(),
+            'total_orders' => \App\Models\Order::count(),
+            'total_revenue' => \App\Models\Order::where('payment_status', 'completed')->sum('amount'),
+            'total_packages' => \App\Models\Package::count(),
+            'total_affiliates' => \App\Models\Affiliate::count(),
+            'total_contacts' => \App\Models\Contact::count(),
+        ];
+
+        return view('admin.settings.backup', compact('backupSettings', 'stats'));
+    }
+
+    public function updateBackup(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'backup_export_email' => 'required|email|max:255',
+            'backup_export_frequency_days' => 'required|integer|min:1|max:365',
+        ]);
+
+        Setting::set('backup_export_email', $validated['backup_export_email']);
+        Setting::set('backup_export_frequency_days', (string) $validated['backup_export_frequency_days']);
+        Setting::set('backup_export_enabled', $request->has('backup_export_enabled') ? '1' : '0');
+
+        return redirect()
+            ->route('admin.settings.backup')
+            ->with('success', 'Automated database export settings saved successfully!');
+    }
+
+    public function sendBackupEmailNow(Request $request, \App\Services\DatabaseExportService $exportService): RedirectResponse
+    {
+        $customEmail = $request->input('target_email');
+        $result = $exportService->sendExportToEmail($customEmail);
+
+        if ($result['success']) {
+            return redirect()
+                ->route('admin.settings.backup')
+                ->with('success', "Database CSV export has been generated and emailed to {$result['email']} successfully!");
+        }
+
+        return redirect()
+            ->route('admin.settings.backup')
+            ->with('error', $result['message']);
+    }
+
+    public function downloadBackupCsv(\App\Services\DatabaseExportService $exportService)
+    {
+        $csvContent = $exportService->generateExportCsv();
+        $filename = '4khdiptv-database-export-' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
+
+    public function webhooks(): View
+    {
+        $webhookSettings = [
+            'webhook_enabled' => Setting::get('webhook_enabled', '1'),
+            'webhook_discord_url' => Setting::get('webhook_discord_url', ''),
+            'webhook_telegram_bot_token' => Setting::get('webhook_telegram_bot_token', ''),
+            'webhook_telegram_chat_id' => Setting::get('webhook_telegram_chat_id', ''),
+            'webhook_custom_url' => Setting::get('webhook_custom_url', ''),
+        ];
+
+        return view('admin.settings.webhooks', compact('webhookSettings'));
+    }
+
+    public function updateWebhooks(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'webhook_discord_url' => 'nullable|url|max:500',
+            'webhook_telegram_bot_token' => 'nullable|string|max:255',
+            'webhook_telegram_chat_id' => 'nullable|string|max:100',
+            'webhook_custom_url' => 'nullable|url|max:500',
+        ]);
+
+        Setting::set('webhook_enabled', $request->has('webhook_enabled') ? '1' : '0');
+        Setting::set('webhook_discord_url', $validated['webhook_discord_url'] ?? '');
+        Setting::set('webhook_telegram_bot_token', $validated['webhook_telegram_bot_token'] ?? '');
+        Setting::set('webhook_telegram_chat_id', $validated['webhook_telegram_chat_id'] ?? '');
+        Setting::set('webhook_custom_url', $validated['webhook_custom_url'] ?? '');
+
+        return redirect()
+            ->route('admin.settings.webhooks')
+            ->with('success', 'Real-time webhook settings saved successfully!');
+    }
+
+    public function testWebhooks(): RedirectResponse
+    {
+        $results = \App\Services\WebhookNotificationService::sendTest();
+
+        $message = 'Webhook test ping triggered. Results: ' . json_encode($results);
+
+        return redirect()
+            ->route('admin.settings.webhooks')
+            ->with('success', $message);
+    }
 }
