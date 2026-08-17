@@ -82,26 +82,34 @@ class CheckoutController extends Controller
     {
         $package = Package::where('slug', $slug)->active()->firstOrFail();
 
-        $validated = $request->validate([
+        $isFreePackage = $package->price <= 0;
+
+        $rules = [
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:1000',
-            'payment_method' => 'required|in:stripe,crypto',
             'selected_countries' => 'nullable|array',
             'referral_code' => 'nullable|string|max:20',
-            'crypto_currency' => 'nullable|required_if:payment_method,crypto|string',
-        ]);
+        ];
 
-        // Validate Payment Method Availability
-        $stripeEnabled = \App\Models\Setting::get('stripe_enabled', '1') === '1';
-        $nowpaymentsEnabled = \App\Models\Setting::get('nowpayments_enabled', '0') === '1';
-
-        if ($validated['payment_method'] === 'stripe' && !$stripeEnabled) {
-             return back()->withInput()->withErrors(['payment_method' => 'Stripe payment is currently disabled.']);
+        if ($isFreePackage) {
+            $rules['payment_method'] = 'nullable|string';
+            $rules['crypto_currency'] = 'nullable|string';
+        } else {
+            $rules['payment_method'] = 'required|in:stripe,crypto';
+            $rules['crypto_currency'] = 'nullable|required_if:payment_method,crypto|string';
         }
-        if ($validated['payment_method'] === 'crypto' && !$nowpaymentsEnabled) {
-             return back()->withInput()->withErrors(['payment_method' => 'Cryptocurrency payment is currently disabled.']);
+
+        $validated = $request->validate($rules);
+
+        // Validate Payment Method Availability for paid orders
+        if (!$isFreePackage) {
+            $stripeEnabled = \App\Models\Setting::get('stripe_enabled', '1') === '1';
+
+            if (($validated['payment_method'] ?? '') === 'stripe' && !$stripeEnabled) {
+                 return back()->withInput()->withErrors(['payment_method' => 'Stripe payment is currently disabled.']);
+            }
         }
 
         // Handle Coupon
@@ -206,10 +214,19 @@ class CheckoutController extends Controller
 
         if ($validated['payment_method'] === 'crypto') {
             // Store selected currency in session for NOWPayments
-            session(['crypto_currency' => $validated['crypto_currency']]);
+            session(['crypto_currency' => $validated['crypto_currency'] ?? 'usdt']);
             
-            // Redirect to NOWPayments invoice creation
-            return redirect()->route('nowpayments.invoice', $order->id);
+            $nowpaymentsEnabled = \App\Models\Setting::get('nowpayments_enabled', '0') === '1';
+            $nowpaymentsKey = \App\Models\Setting::get('nowpayments_api_key');
+            if ($nowpaymentsEnabled && !empty($nowpaymentsKey)) {
+                // Redirect to NOWPayments invoice creation
+                return redirect()->route('nowpayments.invoice', $order->id);
+            }
+
+            // If gateway is not configured yet, redirect to pending page with instructions
+            return redirect()
+                ->route('checkout.pending', $order->order_number)
+                ->with('info', 'Your order has been placed. Please follow the instructions to complete your payment.');
         }
 
         // For other methods, show pending payment page

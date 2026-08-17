@@ -72,6 +72,12 @@ www/
 .wp-toolkit-identifier
 .gemrc
 
+# Database dumps & SQL
+/SQL/
+**/SQL/
+*.sql
+*.sqlite
+
 # Logs
 *.log
 

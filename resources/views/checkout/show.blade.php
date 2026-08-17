@@ -199,16 +199,15 @@
                         <p class="section-hint">Select the cryptocurrency you want to pay with</p>
                         
                         <div class="form-group">
-                            <label for="crypto_currency">Cryptocurrency</label>
-                            <select id="crypto_currency" name="crypto_currency" class="form-select">
-                                <option value="">Choose Currency</option>
-                                <option value="btc" {{ old('crypto_currency') == 'btc' ? 'selected' : '' }}>Bitcoin (BTC)</option>
-                                <option value="eth" {{ old('crypto_currency') == 'eth' ? 'selected' : '' }}>Ethereum (ETH)</option>
-                                <option value="usdt" {{ old('crypto_currency') == 'usdt' ? 'selected' : '' }}>Tether (USDT)</option>
-                                <option value="ltc" {{ old('crypto_currency') == 'ltc' ? 'selected' : '' }}>Litecoin (LTC)</option>
-                                <option value="bnb" {{ old('crypto_currency') == 'bnb' ? 'selected' : '' }}>Binance Coin (BNB)</option>
-                                <option value="trx" {{ old('crypto_currency') == 'trx' ? 'selected' : '' }}>TRON (TRX)</option>
-                                <option value="xrp" {{ old('crypto_currency') == 'xrp' ? 'selected' : '' }}>Ripple (XRP)</option>
+                            <label for="crypto_currency">Cryptocurrency <span class="required">*</span></label>
+                            <select id="crypto_currency" name="crypto_currency" class="form-select" style="background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 0.85rem 1rem; width: 100%; font-size: 1rem;">
+                                <option value="usdt" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency', 'usdt') == 'usdt' ? 'selected' : '' }}>Tether (USDT) - Recommended</option>
+                                <option value="btc" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency') == 'btc' ? 'selected' : '' }}>Bitcoin (BTC)</option>
+                                <option value="eth" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency') == 'eth' ? 'selected' : '' }}>Ethereum (ETH)</option>
+                                <option value="ltc" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency') == 'ltc' ? 'selected' : '' }}>Litecoin (LTC)</option>
+                                <option value="bnb" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency') == 'bnb' ? 'selected' : '' }}>Binance Coin (BNB)</option>
+                                <option value="trx" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency') == 'trx' ? 'selected' : '' }}>TRON (TRX)</option>
+                                <option value="xrp" style="background: #1a1d2e; color: #fff;" {{ old('crypto_currency') == 'xrp' ? 'selected' : '' }}>Ripple (XRP)</option>
                             </select>
                             @error('crypto_currency')
                             <span class="field-error">{{ $message }}</span>
@@ -1327,7 +1326,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {}
         closeCardModal();
     });
-    }
 
     // Auto-uppercase referral code
     const referralCodeInput = document.getElementById('referral_code');
