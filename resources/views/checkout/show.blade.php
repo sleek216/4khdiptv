@@ -1327,6 +1327,26 @@ document.addEventListener('DOMContentLoaded', function() {
         closeCardModal();
     });
 
+    // Prevent multiple submissions and debounce checkout button
+    if (checkoutForm) {
+        let isSubmitting = false;
+        checkoutForm.addEventListener('submit', function (e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+
+            const submitBtn = checkoutForm.querySelector('.checkout-btn');
+            if (submitBtn) {
+                isSubmitting = true;
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+                submitBtn.style.cursor = 'not-allowed';
+                submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Processing Order...';
+            }
+        });
+    }
+
     // Auto-uppercase referral code
     const referralCodeInput = document.getElementById('referral_code');
     if (referralCodeInput) {

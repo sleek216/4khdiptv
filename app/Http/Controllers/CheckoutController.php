@@ -181,50 +181,91 @@ class CheckoutController extends Controller
             if (!empty($package->duration_days)) $expiryDate->addDays((int) $package->duration_days);
         }
 
-        // Create order
-        \Log::info('CheckoutController: Creating order for package ID: ' . $package->id);
-        $order = Order::create([
-            'order_number' => Order::generateOrderNumber(),
-            'user_id' => auth()->id(),
-            'package_id' => $package->id,
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
-            'customer_phone' => $validated['customer_phone'] ?? null,
-            'amount' => $finalPrice, // Use discounted price
-            'payment_method' => $finalPrice > 0 ? $validated['payment_method'] : 'free',
-            'notes' => $validated['notes'] ?? null,
-            'selected_countries' => $validated['selected_countries'] ?? null,
-            'coupon_code' => $appliedCoupon ? $appliedCoupon->code : null,
-            'discount_amount' => $discountAmount,
-            // If price is 0, mark as paid immediately
-            'payment_status' => $finalPrice <= 0 ? 'completed' : 'pending',
-            'order_status' => $finalPrice <= 0 ? 'pending' : 'pending', // Keep pending for manual review or auto-process
-            'activated_at' => $finalPrice <= 0 ? now() : null,
-            'expires_at' => $expiryDate,
-        ]);
-
-        // Attach countries if selected
-        if (!empty($validated['selected_countries'])) {
-            $order->countries()->attach($validated['selected_countries']);
-        }
-
-        // Trigger Instant Real-Time Outgoing Webhooks (Discord, Telegram, Custom)
-        try {
-            \App\Services\WebhookNotificationService::notifyNewOrder($order);
-        } catch (\Throwable $e) {
-            \Log::warning('Webhook notification error: ' . $e->getMessage());
-        }
-
-        // Notify Admin of new order creation (with fallback to From Address)
-        try {
-            $adminEmail = \App\Models\Setting::get('admin_notification_email')
-                ?: \App\Models\Setting::get('mail_from_address')
-                ?: config('mail.from.address');
-            if ($adminEmail) {
-                \Mail::to($adminEmail)->send(new \App\Mail\NewOrderNotification($order));
+        // Deduplication: Check if there is an existing pending unpaid order for this user/email and package within the last 15 minutes
+        $existingOrder = Order::where(function ($q) use ($validated) {
+            $q->where('customer_email', $validated['customer_email']);
+            if (auth()->check()) {
+                $q->orWhere('user_id', auth()->id());
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to send new order admin notification: ' . $e->getMessage());
+        })
+        ->where('package_id', $package->id)
+        ->where('payment_status', 'pending')
+        ->where('order_status', 'pending')
+        ->where('created_at', '>=', now()->subMinutes(15))
+        ->latest()
+        ->first();
+
+        if ($existingOrder) {
+            \Log::info('CheckoutController: Reusing existing pending order ID: ' . $existingOrder->id . ' for package ID: ' . $package->id);
+            $order = $existingOrder;
+            $order->update([
+                'user_id' => auth()->id(),
+                'customer_name' => $validated['customer_name'],
+                'customer_email' => $validated['customer_email'],
+                'customer_phone' => $validated['customer_phone'] ?? null,
+                'amount' => $finalPrice,
+                'payment_method' => $finalPrice > 0 ? $validated['payment_method'] : 'free',
+                'notes' => $validated['notes'] ?? null,
+                'selected_countries' => $validated['selected_countries'] ?? null,
+                'coupon_code' => $appliedCoupon ? $appliedCoupon->code : null,
+                'discount_amount' => $discountAmount,
+                'expires_at' => $expiryDate,
+            ]);
+
+            if (isset($validated['selected_countries'])) {
+                $order->countries()->sync($validated['selected_countries']);
+            }
+            $isNewOrder = false;
+        } else {
+            // Create new order
+            \Log::info('CheckoutController: Creating order for package ID: ' . $package->id);
+            $order = Order::create([
+                'order_number' => Order::generateOrderNumber(),
+                'user_id' => auth()->id(),
+                'package_id' => $package->id,
+                'customer_name' => $validated['customer_name'],
+                'customer_email' => $validated['customer_email'],
+                'customer_phone' => $validated['customer_phone'] ?? null,
+                'amount' => $finalPrice, // Use discounted price
+                'payment_method' => $finalPrice > 0 ? $validated['payment_method'] : 'free',
+                'notes' => $validated['notes'] ?? null,
+                'selected_countries' => $validated['selected_countries'] ?? null,
+                'coupon_code' => $appliedCoupon ? $appliedCoupon->code : null,
+                'discount_amount' => $discountAmount,
+                // If price is 0, mark as paid immediately
+                'payment_status' => $finalPrice <= 0 ? 'completed' : 'pending',
+                'order_status' => $finalPrice <= 0 ? 'pending' : 'pending', // Keep pending for manual review or auto-process
+                'activated_at' => $finalPrice <= 0 ? now() : null,
+                'expires_at' => $expiryDate,
+            ]);
+
+            // Attach countries if selected
+            if (!empty($validated['selected_countries'])) {
+                $order->countries()->attach($validated['selected_countries']);
+            }
+            $isNewOrder = true;
+        }
+
+        // Only send admin notifications and webhooks for brand new orders
+        if ($isNewOrder) {
+            // Trigger Instant Real-Time Outgoing Webhooks (Discord, Telegram, Custom)
+            try {
+                \App\Services\WebhookNotificationService::notifyNewOrder($order);
+            } catch (\Throwable $e) {
+                \Log::warning('Webhook notification error: ' . $e->getMessage());
+            }
+
+            // Notify Admin of new order creation (with fallback to From Address)
+            try {
+                $adminEmail = \App\Models\Setting::get('admin_notification_email')
+                    ?: \App\Models\Setting::get('mail_from_address')
+                    ?: config('mail.from.address');
+                if ($adminEmail) {
+                    \Mail::to($adminEmail)->send(new \App\Mail\NewOrderNotification($order));
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send new order admin notification: ' . $e->getMessage());
+            }
         }
 
         // Handle Free Orders (Price = 0)
