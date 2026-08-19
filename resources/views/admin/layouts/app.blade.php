@@ -962,7 +962,7 @@
                                 `🛒 New Order #${snaps.last_order_info.order_number}`,
                                 `Customer: ${snaps.last_order_info.customer_name} • ${snaps.last_order_info.amount} (${snaps.last_order_info.package_name})`,
                                 '⚡',
-                                `{{ url('/admin/orders') }}/${snaps.last_order_info.id}`
+                                `{{ route('admin.orders.index') }}/${snaps.last_order_info.id}`
                             );
                         }
 
@@ -972,7 +972,7 @@
                                 `📩 New Support Inquiry`,
                                 `From: ${snaps.last_contact_info.name} • "${snaps.last_contact_info.subject}"`,
                                 '💬',
-                                `{{ url('/admin/contacts') }}/${snaps.last_contact_info.id}`
+                                `{{ route('admin.contacts.index') }}/${snaps.last_contact_info.id}`
                             );
                         }
 
@@ -982,7 +982,7 @@
                                 `👤 New Customer Registered`,
                                 `${snaps.last_user_info.name} (${snaps.last_user_info.email})`,
                                 '✨',
-                                `{{ url('/admin/users') }}/${snaps.last_user_info.id}`
+                                `{{ route('admin.users.index') }}/${snaps.last_user_info.id}`
                             );
                         }
                     }

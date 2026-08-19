@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password as PasswordFacade;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -88,7 +88,20 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $throttleKey = Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
+
+        // Lock out after 5 consecutive failed attempts for 15 minutes (900 seconds)
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+            return back()->withErrors([
+                'email' => "Too many login attempts. For security reasons, please try again in {$minutes} minute(s).",
+            ])->onlyInput('email');
+        }
+
         if (Auth::validate($credentials)) {
+            RateLimiter::clear($throttleKey);
+
             $user = User::where('email', $credentials['email'])->first();
 
             if ($user->google2fa_enabled) {
@@ -125,6 +138,9 @@ class AuthController extends Controller
 
             return redirect()->intended(route('home'));
         }
+
+        // Increment failed attempt counter with 15-minute decay
+        RateLimiter::hit($throttleKey, 900);
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',

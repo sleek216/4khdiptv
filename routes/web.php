@@ -133,8 +133,10 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// Admin Routes
-Route::prefix('admin')->middleware(['admin', 'admin.module'])->name('admin.')->group(function () {
+// Admin Routes (Configurable secret path via ADMIN_PATH env)
+$adminPath = config('app.admin_path', 'admin');
+
+Route::prefix($adminPath)->middleware(['admin', 'admin.module'])->name('admin.')->group(function () {
     // Dashboard
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/export/system-backup', [AdminSystemExportController::class, 'download'])->name('export.system-backup');
@@ -248,6 +250,13 @@ Route::prefix('admin')->middleware(['admin', 'admin.module'])->name('admin.')->g
         Route::put('/settings', [AffiliateManagementController::class, 'updateSettings'])->name('settings.update');
     });
 });
+
+// If a custom admin URL is set, block default /admin path with 404 Not Found
+if ($adminPath !== 'admin') {
+    Route::any('/admin/{any?}', function () {
+        abort(404);
+    })->where('any', '.*');
+}
 
 // Custom System Error & Support Query Route
 Route::view('/system-support', 'errors.500')->name('system.support');

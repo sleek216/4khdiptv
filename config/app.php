@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Secret Admin URL Path
+    |--------------------------------------------------------------------------
+    |
+    | Custom prefix used to route admin dashboard and management panel.
+    | Change this in .env (e.g. ADMIN_PATH=secret-portal-786) to hide admin URL.
+    |
+    */
+
+    'admin_path' => env('ADMIN_PATH', 'admin'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
