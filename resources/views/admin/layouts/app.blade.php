@@ -745,7 +745,7 @@
                     <span>Security</span>
                 </a>
 
-                <form method="POST" action="{{ route('logout') }}" class="m-0 mt-3">
+                <form method="POST" action="{{ route('admin.logout') }}" class="m-0 mt-3">
                     @csrf
                     <button type="submit" class="nav-item w-100 bg-transparent border-0 text-start" style="cursor: pointer;">
                         <i class="ph ph-sign-out"></i>

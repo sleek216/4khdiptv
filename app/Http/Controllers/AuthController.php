@@ -104,6 +104,14 @@ class AuthController extends Controller
 
             $user = User::where('email', $credentials['email'])->first();
 
+            // Strict Portal Isolation: Admin accounts must login through dedicated secret admin portal
+            if ($user && $user->isAdmin()) {
+                RateLimiter::hit($throttleKey, 900);
+                return back()->withErrors([
+                    'email' => 'The provided credentials do not match our records.',
+                ])->onlyInput('email');
+            }
+
             if ($user->google2fa_enabled) {
                 session()->put([
                     '2fa_user_id' => $user->id,
@@ -120,21 +128,6 @@ class AuthController extends Controller
             $user->update(['last_login_at' => now()]);
 
             app(\App\Services\AffiliateService::class)->ensureAffiliateSetup($user);
-
-            // Redirect admin to first allowed admin section
-            if ($user->isAdmin()) {
-                $routeName = $user->defaultAdminRouteName();
-
-                if ($routeName) {
-                    return redirect()->intended(route($routeName));
-                }
-
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return redirect()->route('login')->with('error', 'Your admin account has no module access assigned.');
-            }
 
             return redirect()->intended(route('home'));
         }

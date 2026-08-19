@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\ContactController as AdminContactController;
 use App\Http\Controllers\Admin\BlogController as AdminBlogController;
 use App\Http\Controllers\Admin\SystemExportController as AdminSystemExportController;
 use App\Http\Controllers\Admin\LiveHeartbeatController as AdminLiveHeartbeatController;
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
@@ -136,6 +137,14 @@ Route::middleware('auth')->group(function () {
 // Admin Routes (Configurable secret path via ADMIN_PATH env)
 $adminPath = config('app.admin_path', 'admin');
 
+// 1. Dedicated Admin Authentication (Secret Path)
+Route::prefix($adminPath)->name('admin.')->group(function () {
+    Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+});
+
+// 2. Protected Admin Operations & Management
 Route::prefix($adminPath)->middleware(['admin', 'admin.module'])->name('admin.')->group(function () {
     // Dashboard
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
