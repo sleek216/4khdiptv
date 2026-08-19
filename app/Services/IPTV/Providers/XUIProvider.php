@@ -56,8 +56,8 @@ class XUIProvider implements ProviderInterface
             'username' => $data['username'],
             'password' => $data['password'],
             'member_id' => 1,
-            'expire_date' => now()->addDays($data['duration_days'])->timestamp,
-            'max_connections' => $data['max_connections'] ?? 1,
+            'expire_date' => now()->addDays((int) ($data['duration_days'] ?? 30))->timestamp,
+            'max_connections' => (int) ($data['max_connections'] ?? 1),
             'package' => $data['provider_package_id'],
             'bouquet' => json_encode($data['bouquet_ids'] ?? []),
         ];

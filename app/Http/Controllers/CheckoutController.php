@@ -177,8 +177,8 @@ class CheckoutController extends Controller
         $expiryDate = null;
         if (!empty($package->duration_months) || !empty($package->duration_days)) {
             $expiryDate = now();
-            if (!empty($package->duration_months)) $expiryDate->addMonths($package->duration_months);
-            if (!empty($package->duration_days)) $expiryDate->addDays($package->duration_days);
+            if (!empty($package->duration_months)) $expiryDate->addMonths((int) $package->duration_months);
+            if (!empty($package->duration_days)) $expiryDate->addDays((int) $package->duration_days);
         }
 
         // Create order

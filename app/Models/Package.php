@@ -30,6 +30,11 @@ class Package extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
+        'duration_months' => 'integer',
+        'duration_days' => 'integer',
+        'connections' => 'integer',
+        'devices' => 'integer',
+        'sort_order' => 'integer',
         'is_featured' => 'boolean',
         'is_popular' => 'boolean',
         'is_active' => 'boolean',

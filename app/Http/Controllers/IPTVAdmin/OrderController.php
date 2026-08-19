@@ -59,7 +59,7 @@ class OrderController extends Controller
                 'username' => $username,
                 'password' => $password,
                 'provider_client_id' => $result['client_id'],
-                'expires_at' => now()->addDays($mapping->duration_days)
+                'expires_at' => now()->addDays((int) $mapping->duration_days)
             ]);
             return back()->with('success', 'IPTV Account created successfully!');
         }

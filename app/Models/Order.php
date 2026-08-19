@@ -154,12 +154,12 @@ class Order extends Model
         $hasDuration = false;
 
         if (!empty($this->package->duration_months)) {
-            $date->addMonths($this->package->duration_months);
+            $date->addMonths((int) $this->package->duration_months);
             $hasDuration = true;
         }
 
         if (!empty($this->package->duration_days)) {
-            $date->addDays($this->package->duration_days);
+            $date->addDays((int) $this->package->duration_days);
             $hasDuration = true;
         }
 

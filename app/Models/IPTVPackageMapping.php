@@ -16,6 +16,8 @@ class IPTVPackageMapping extends Model
     ];
 
     protected $casts = [
+        'duration_days' => 'integer',
+        'max_connections' => 'integer',
         'bouquet_ids' => 'json',
         'is_trial' => 'boolean',
     ];
