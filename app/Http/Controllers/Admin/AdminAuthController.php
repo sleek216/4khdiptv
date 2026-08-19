@@ -41,8 +41,9 @@ class AdminAuthController extends Controller
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             $minutes = ceil($seconds / 60);
+            session()->flash('lockout_seconds', $seconds);
             return back()->withErrors([
-                'email' => "Too many failed login attempts. Portal access locked for {$minutes} minute(s).",
+                'email' => "Portal access locked due to 5 failed attempts. Please wait {$minutes} minute(s) before trying again.",
             ])->onlyInput('email');
         }
 
@@ -51,9 +52,20 @@ class AdminAuthController extends Controller
 
             // Strict check: Only Admin accounts (is_admin = true) are permitted
             if (!$user || !$user->isAdmin()) {
-                RateLimiter::hit($throttleKey, 1200);
+                $attempts = RateLimiter::hit($throttleKey, 1200);
+                if ($attempts >= 5) {
+                    $seconds = RateLimiter::availableIn($throttleKey);
+                    session()->flash('lockout_seconds', $seconds);
+                    return back()->withErrors([
+                        'email' => "Too many failed attempts. Portal access is now locked for 20 minutes.",
+                    ])->onlyInput('email');
+                }
+
+                $remaining = 5 - $attempts;
+                $warning = $attempts > 2 ? " (Warning: {$remaining} " . ($remaining === 1 ? 'attempt' : 'attempts') . " remaining before 20-minute lockout)" : "";
+
                 return back()->withErrors([
-                    'email' => 'Access denied. You do not have administrator permissions for this portal.',
+                    'email' => 'Access denied. You do not have administrator permissions for this portal.' . $warning,
                 ])->onlyInput('email');
             }
 
@@ -80,10 +92,23 @@ class AdminAuthController extends Controller
         }
 
         // Increment failed attempt counter with 20-minute decay (1200 seconds)
-        RateLimiter::hit($throttleKey, 1200);
+        $attempts = RateLimiter::hit($throttleKey, 1200);
+
+        if ($attempts >= 5) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            session()->flash('lockout_seconds', $seconds);
+            return back()->withErrors([
+                'email' => "Too many failed login attempts. Portal access is now locked for 20 minutes.",
+            ])->onlyInput('email');
+        }
+
+        $remaining = 5 - $attempts;
+        $warning = $attempts > 2 
+            ? " (Warning: {$remaining} " . ($remaining === 1 ? 'attempt' : 'attempts') . " remaining before 20-minute lockout)"
+            : "";
 
         return back()->withErrors([
-            'email' => 'Invalid administrator credentials.',
+            'email' => 'Invalid administrator credentials.' . $warning,
         ])->onlyInput('email');
     }
 

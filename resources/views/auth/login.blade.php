@@ -255,7 +255,23 @@
             <h2>Sign In</h2>
             <p class="lead">Enter your email and password to continue.</p>
 
-            @if($errors->any())
+            @php
+                $isLocked = session()->has('lockout_seconds') && session('lockout_seconds') > 0;
+                $lockoutSeconds = session('lockout_seconds', 0);
+            @endphp
+
+            @if($isLocked)
+                <div class="err-box" style="background: rgba(219, 39, 119, 0.18); border-color: rgba(219, 39, 119, 0.5); padding: 14px 16px;">
+                    <div style="font-weight: 800; font-family: var(--font-d); color: #f472b6; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                        <i class="ph-fill ph-lock-key" style="font-size: 18px;"></i>
+                        <span>ACCOUNT ACCESS TEMPORARILY LOCKED</span>
+                    </div>
+                    <div style="font-size: 13px; color: #fce7f3;">
+                        5 failed attempts reached. Form inputs are locked for:
+                        <strong id="custLockoutTimer" style="background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 6px; color: #ffffff; font-size: 15px; margin-left: 4px;"></strong>
+                    </div>
+                </div>
+            @elseif($errors->any())
                 <div class="err-box">
                     @foreach($errors->all() as $error)
                         <div><i class="ph ph-warning-circle me-1"></i>{{ $error }}</div>
@@ -263,22 +279,22 @@
                 </div>
             @endif
 
-            <form action="{{ route('login') }}" method="POST">
+            <form action="{{ route('login') }}" method="POST" id="userLoginForm">
                 @csrf
-                <div class="input-vault">
+                <div class="input-vault" style="{{ $isLocked ? 'opacity: 0.5; pointer-events: none;' : '' }}">
                     <label>Email</label>
                     <i class="ph ph-envelope"></i>
-                    <input class="framer-input" type="email" name="email" value="{{ old('email') }}" placeholder="you@email.com" required autofocus>
+                    <input class="framer-input" type="email" id="custEmail" name="email" value="{{ old('email') }}" placeholder="you@email.com" required autofocus {{ $isLocked ? 'disabled readonly' : '' }}>
                 </div>
-                <div class="input-vault">
+                <div class="input-vault" style="{{ $isLocked ? 'opacity: 0.5; pointer-events: none;' : '' }}">
                     <label>Password</label>
                     <i class="ph ph-lock-key"></i>
-                    <input class="framer-input" type="password" name="password" placeholder="Your password" required>
+                    <input class="framer-input" type="password" id="custPass" name="password" placeholder="Your password" required {{ $isLocked ? 'disabled readonly' : '' }}>
                 </div>
 
                 <div class="row-meta">
                     <label>
-                        <input type="checkbox" name="remember" style="accent-color:#7c3aed;">
+                        <input type="checkbox" name="remember" style="accent-color:#7c3aed;" {{ $isLocked ? 'disabled' : '' }}>
                         Remember me
                     </label>
                     @if (Route::has('password.request'))
@@ -286,7 +302,13 @@
                     @endif
                 </div>
 
-                <button type="submit" class="btn-main">Sign In</button>
+                <button type="submit" id="custSubmitBtn" class="btn-main" {{ $isLocked ? 'disabled style=opacity:0.5;cursor:not-allowed;background:#374151;' : '' }}>
+                    @if($isLocked)
+                        <i class="ph ph-lock"></i> Locked Out
+                    @else
+                        Sign In
+                    @endif
+                </button>
             </form>
 
             <div class="auth-footer">
@@ -295,5 +317,58 @@
         </div>
     </section>
 </div>
+
+@if($isLocked)
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let remainingSeconds = {{ (int) $lockoutSeconds }};
+        const timerEl = document.getElementById('custLockoutTimer');
+        const submitBtn = document.getElementById('custSubmitBtn');
+        const emailInput = document.getElementById('custEmail');
+        const passInput = document.getElementById('custPass');
+
+        function updateDisplay() {
+            if (remainingSeconds <= 0) {
+                if (timerEl) timerEl.innerText = "00:00 - Unlocked";
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style = "";
+                    submitBtn.innerText = 'Sign In';
+                }
+                if (emailInput) {
+                    emailInput.disabled = false;
+                    emailInput.readOnly = false;
+                    emailInput.closest('.input-vault').style = "";
+                }
+                if (passInput) {
+                    passInput.disabled = false;
+                    passInput.readOnly = false;
+                    passInput.closest('.input-vault').style = "";
+                }
+                return;
+            }
+
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            const formatted = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+            if (timerEl) timerEl.innerText = formatted;
+            if (submitBtn) submitBtn.innerHTML = '<i class="ph ph-lock"></i> Locked (' + formatted + ')';
+
+            remainingSeconds--;
+        }
+
+        updateDisplay();
+        const countdownInterval = setInterval(function () {
+            if (remainingSeconds <= 0) {
+                clearInterval(countdownInterval);
+                updateDisplay();
+            } else {
+                updateDisplay();
+            }
+        }, 1000);
+    });
+</script>
+@endif
 </body>
 </html>

@@ -94,23 +94,35 @@ class AuthController extends Controller
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             $minutes = ceil($seconds / 60);
+            session()->flash('lockout_seconds', $seconds);
             return back()->withErrors([
-                'email' => "Too many login attempts. For security reasons, please try again in {$minutes} minute(s).",
+                'email' => "Account login locked due to 5 failed attempts. Please wait {$minutes} minute(s) before trying again.",
             ])->onlyInput('email');
         }
 
         if (Auth::validate($credentials)) {
-            RateLimiter::clear($throttleKey);
-
             $user = User::where('email', $credentials['email'])->first();
 
             // Strict Portal Isolation: Admin accounts must login through dedicated secret admin portal
             if ($user && $user->isAdmin()) {
-                RateLimiter::hit($throttleKey, 1200);
+                $attempts = RateLimiter::hit($throttleKey, 1200);
+                if ($attempts >= 5) {
+                    $seconds = RateLimiter::availableIn($throttleKey);
+                    session()->flash('lockout_seconds', $seconds);
+                    return back()->withErrors([
+                        'email' => "Too many failed attempts. Account login is now locked for 20 minutes.",
+                    ])->onlyInput('email');
+                }
+
+                $remaining = 5 - $attempts;
+                $warning = $attempts > 2 ? " (Warning: {$remaining} " . ($remaining === 1 ? 'attempt' : 'attempts') . " remaining before 20-minute lockout)" : "";
+
                 return back()->withErrors([
-                    'email' => 'The provided credentials do not match our records.',
+                    'email' => 'The provided credentials do not match our records.' . $warning,
                 ])->onlyInput('email');
             }
+
+            RateLimiter::clear($throttleKey);
 
             if ($user->google2fa_enabled) {
                 session()->put([
@@ -133,10 +145,23 @@ class AuthController extends Controller
         }
 
         // Increment failed attempt counter with 20-minute decay (1200 seconds)
-        RateLimiter::hit($throttleKey, 1200);
+        $attempts = RateLimiter::hit($throttleKey, 1200);
+
+        if ($attempts >= 5) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            session()->flash('lockout_seconds', $seconds);
+            return back()->withErrors([
+                'email' => "Too many failed login attempts. Account access is now locked for 20 minutes.",
+            ])->onlyInput('email');
+        }
+
+        $remaining = 5 - $attempts;
+        $warning = $attempts > 2 
+            ? " (Warning: {$remaining} " . ($remaining === 1 ? 'attempt' : 'attempts') . " remaining before 20-minute security lockout)"
+            : "";
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'email' => 'The provided credentials do not match our records.' . $warning,
         ])->onlyInput('email');
     }
 

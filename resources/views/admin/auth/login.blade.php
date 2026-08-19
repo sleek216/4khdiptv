@@ -223,9 +223,25 @@
             </div>
         @endif
 
-        @if($errors->any())
+        @php
+            $isLocked = session()->has('lockout_seconds') && session('lockout_seconds') > 0;
+            $lockoutSeconds = session('lockout_seconds', 0);
+        @endphp
+
+        @if($isLocked)
+            <div class="custom-alert" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div class="d-flex align-items-center gap-2" style="font-weight: 700; color: #fca5a5;">
+                    <i class="ph-fill ph-lock" style="font-size: 20px;"></i>
+                    <span>SECURITY LOCKOUT ACTIVATED</span>
+                </div>
+                <div style="font-size: 13px; color: #fecaca;">
+                    Too many failed attempts. Inputs are locked for:
+                    <strong id="lockoutTimer" style="font-family: var(--font-display); font-size: 16px; color: #ffffff; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 6px; margin-left: 4px;"></strong>
+                </div>
+            </div>
+        @elseif($errors->any())
             <div class="custom-alert">
-                <i class="ph-fill ph-x-circle" style="font-size: 18px;"></i>
+                <i class="ph-fill ph-warning-circle" style="font-size: 18px;"></i>
                 <div>
                     @foreach($errors->all() as $error)
                         <div>{{ $error }}</div>
@@ -234,7 +250,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.login.submit') }}">
+        <form method="POST" action="{{ route('admin.login.submit') }}" id="adminLoginForm">
             @csrf
 
             <div class="mb-3">
@@ -251,6 +267,7 @@
                     required 
                     autofocus
                     autocomplete="username"
+                    {{ $isLocked ? 'disabled readonly style=opacity:0.4;cursor:not-allowed;' : '' }}
                 >
             </div>
 
@@ -266,20 +283,25 @@
                     placeholder="••••••••••••" 
                     required
                     autocomplete="current-password"
+                    {{ $isLocked ? 'disabled readonly style=opacity:0.4;cursor:not-allowed;' : '' }}
                 >
             </div>
 
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="form-check" style="cursor: pointer;">
-                    <input class="form-check-input" type="checkbox" name="remember" id="remember" style="background-color: rgba(255,255,255,0.06); border-color: var(--border-color);">
+                    <input class="form-check-input" type="checkbox" name="remember" id="remember" style="background-color: rgba(255,255,255,0.06); border-color: var(--border-color);" {{ $isLocked ? 'disabled' : '' }}>
                     <label class="form-check-label" for="remember" style="font-size: 13px; color: var(--text-muted); cursor: pointer;">
                         Keep session active
                     </label>
                 </div>
             </div>
 
-            <button type="submit" class="btn-portal-submit">
-                <i class="ph-bold ph-key"></i> Authenticate Access
+            <button type="submit" id="submitBtn" class="btn-portal-submit" {{ $isLocked ? 'disabled style=opacity:0.5;cursor:not-allowed;background:#374151;box-shadow:none;' : '' }}>
+                @if($isLocked)
+                    <i class="ph-bold ph-lock"></i> Portal Locked
+                @else
+                    <i class="ph-bold ph-key"></i> Authenticate Access
+                @endif
             </button>
         </form>
 
@@ -287,6 +309,59 @@
             <i class="ph-bold ph-lock"></i> 256-bit TLS Encrypted & Monitored
         </div>
     </div>
+
+    @if($isLocked)
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let remainingSeconds = {{ (int) $lockoutSeconds }};
+            const timerEl = document.getElementById('lockoutTimer');
+            const submitBtn = document.getElementById('submitBtn');
+            const emailInput = document.getElementById('email');
+            const passInput = document.getElementById('password');
+
+            function updateDisplay() {
+                if (remainingSeconds <= 0) {
+                    if (timerEl) timerEl.innerText = "00:00 - Unlocked";
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.style = "";
+                        submitBtn.innerHTML = '<i class="ph-bold ph-key"></i> Authenticate Access';
+                    }
+                    if (emailInput) {
+                        emailInput.disabled = false;
+                        emailInput.readOnly = false;
+                        emailInput.style = "";
+                    }
+                    if (passInput) {
+                        passInput.disabled = false;
+                        passInput.readOnly = false;
+                        passInput.style = "";
+                    }
+                    return;
+                }
+
+                const minutes = Math.floor(remainingSeconds / 60);
+                const seconds = remainingSeconds % 60;
+                const formatted = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+                if (timerEl) timerEl.innerText = formatted;
+                if (submitBtn) submitBtn.innerHTML = '<i class="ph-bold ph-lock"></i> Locked (' + formatted + ')';
+
+                remainingSeconds--;
+            }
+
+            updateDisplay();
+            const countdownInterval = setInterval(function () {
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    updateDisplay();
+                } else {
+                    updateDisplay();
+                }
+            }, 1000);
+        });
+    </script>
+    @endif
 
 </body>
 </html>
