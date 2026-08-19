@@ -90,7 +90,7 @@ class AuthController extends Controller
 
         $throttleKey = Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
 
-        // Lock out after 5 consecutive failed attempts for 15 minutes (900 seconds)
+        // Lock out after 5 consecutive failed attempts for 20 minutes (1200 seconds)
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             $minutes = ceil($seconds / 60);
@@ -106,7 +106,7 @@ class AuthController extends Controller
 
             // Strict Portal Isolation: Admin accounts must login through dedicated secret admin portal
             if ($user && $user->isAdmin()) {
-                RateLimiter::hit($throttleKey, 900);
+                RateLimiter::hit($throttleKey, 1200);
                 return back()->withErrors([
                     'email' => 'The provided credentials do not match our records.',
                 ])->onlyInput('email');
@@ -132,8 +132,8 @@ class AuthController extends Controller
             return redirect()->intended(route('home'));
         }
 
-        // Increment failed attempt counter with 15-minute decay
-        RateLimiter::hit($throttleKey, 900);
+        // Increment failed attempt counter with 20-minute decay (1200 seconds)
+        RateLimiter::hit($throttleKey, 1200);
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',

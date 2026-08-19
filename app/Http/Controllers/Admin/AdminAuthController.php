@@ -37,12 +37,12 @@ class AdminAuthController extends Controller
 
         $throttleKey = Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip() . '|admin_login');
 
-        // Brute force protection: Lock out after 5 attempts for 15 minutes (900s)
+        // Brute force protection: Lock out after 5 attempts for 20 minutes (1200s)
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             $minutes = ceil($seconds / 60);
             return back()->withErrors([
-                'email' => "Too many failed admin login attempts. Portal access locked for {$minutes} minute(s).",
+                'email' => "Too many failed login attempts. Portal access locked for {$minutes} minute(s).",
             ])->onlyInput('email');
         }
 
@@ -51,7 +51,7 @@ class AdminAuthController extends Controller
 
             // Strict check: Only Admin accounts (is_admin = true) are permitted
             if (!$user || !$user->isAdmin()) {
-                RateLimiter::hit($throttleKey, 900);
+                RateLimiter::hit($throttleKey, 1200);
                 return back()->withErrors([
                     'email' => 'Access denied. You do not have administrator permissions for this portal.',
                 ])->onlyInput('email');
@@ -79,7 +79,8 @@ class AdminAuthController extends Controller
             return redirect()->intended(route($defaultRoute));
         }
 
-        RateLimiter::hit($throttleKey, 900);
+        // Increment failed attempt counter with 20-minute decay (1200 seconds)
+        RateLimiter::hit($throttleKey, 1200);
 
         return back()->withErrors([
             'email' => 'Invalid administrator credentials.',
