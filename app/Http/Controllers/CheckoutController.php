@@ -9,6 +9,9 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -35,7 +38,11 @@ class CheckoutController extends Controller
 
         $referralCodePrefill = old('referral_code', app(\App\Services\AffiliateService::class)->getReferralCode());
 
-        return view('checkout.show', compact('package', 'countries', 'discountAmount', 'finalPrice', 'coupon', 'referralCodePrefill'));
+        // Generate a unique idempotency submission token for this checkout view
+        $checkoutToken = (string) Str::uuid();
+        session(['checkout_submission_token' => $checkoutToken]);
+
+        return view('checkout.show', compact('package', 'countries', 'discountAmount', 'finalPrice', 'coupon', 'referralCodePrefill', 'checkoutToken'));
     }
 
     public function applyCoupon(Request $request): \Illuminate\Http\JsonResponse
@@ -181,42 +188,39 @@ class CheckoutController extends Controller
             if (!empty($package->duration_days)) $expiryDate->addDays((int) $package->duration_days);
         }
 
-        // Deduplication: Check if there is an existing pending unpaid order for this user/email and package within the last 15 minutes
-        $existingOrder = Order::where(function ($q) use ($validated) {
-            $q->where('customer_email', $validated['customer_email']);
-            if (auth()->check()) {
-                $q->orWhere('user_id', auth()->id());
-            }
-        })
-        ->where('package_id', $package->id)
-        ->where('payment_status', 'pending')
-        ->where('order_status', 'pending')
-        ->where('created_at', '>=', now()->subMinutes(15))
-        ->latest()
-        ->first();
+        // 1. Check Idempotency Submission Token (Instant check)
+        $checkoutToken = $request->input('checkout_token');
 
-        if ($existingOrder) {
-            \Log::info('CheckoutController: Reusing existing pending order ID: ' . $existingOrder->id . ' for package ID: ' . $package->id);
-            $order = $existingOrder;
-            $order->update([
-                'user_id' => auth()->id(),
-                'customer_name' => $validated['customer_name'],
-                'customer_email' => $validated['customer_email'],
-                'customer_phone' => $validated['customer_phone'] ?? null,
-                'amount' => $finalPrice,
-                'payment_method' => $finalPrice > 0 ? $validated['payment_method'] : 'free',
-                'notes' => $validated['notes'] ?? null,
-                'selected_countries' => $validated['selected_countries'] ?? null,
-                'coupon_code' => $appliedCoupon ? $appliedCoupon->code : null,
-                'discount_amount' => $discountAmount,
-                'expires_at' => $expiryDate,
-            ]);
-
-            if (isset($validated['selected_countries'])) {
-                $order->countries()->sync($validated['selected_countries']);
+        if ($checkoutToken) {
+            $cachedOrderId = Cache::get("checkout_token_order_{$checkoutToken}") ?: session("checkout_token_order_{$checkoutToken}");
+            if ($cachedOrderId) {
+                $existingOrder = Order::find($cachedOrderId);
+                if ($existingOrder) {
+                    \Log::info('CheckoutController: Duplicate submission detected for token ' . $checkoutToken . ', reusing order ' . $existingOrder->order_number);
+                    return $this->redirectForPayment($existingOrder, $validated);
+                }
             }
-            $isNewOrder = false;
-        } else {
+        }
+
+        // 2. Concurrency Lock to prevent rapid parallel clicks/requests from racing
+        $lockKey = $checkoutToken ? "lock_checkout_{$checkoutToken}" : ('lock_checkout_user_' . (auth()->id() ?: md5($validated['customer_email'])));
+        $lock = Cache::lock($lockKey, 10);
+
+        try {
+            // Block up to 5 seconds to acquire lock
+            $lock->block(5);
+
+            // Re-verify after lock acquisition (in case another thread just created the order)
+            if ($checkoutToken) {
+                $cachedOrderId = Cache::get("checkout_token_order_{$checkoutToken}") ?: session("checkout_token_order_{$checkoutToken}");
+                if ($cachedOrderId) {
+                    $existingOrder = Order::find($cachedOrderId);
+                    if ($existingOrder) {
+                        return $this->redirectForPayment($existingOrder, $validated);
+                    }
+                }
+            }
+
             // Create new order
             \Log::info('CheckoutController: Creating order for package ID: ' . $package->id);
             $order = Order::create([
@@ -243,11 +247,13 @@ class CheckoutController extends Controller
             if (!empty($validated['selected_countries'])) {
                 $order->countries()->attach($validated['selected_countries']);
             }
-            $isNewOrder = true;
-        }
 
-        // Only send admin notifications and webhooks for brand new orders
-        if ($isNewOrder) {
+            // Store order mapping for this submission token
+            if ($checkoutToken) {
+                Cache::put("checkout_token_order_{$checkoutToken}", $order->id, now()->addHours(2));
+                session(["checkout_token_order_{$checkoutToken}" => $order->id]);
+            }
+
             // Trigger Instant Real-Time Outgoing Webhooks (Discord, Telegram, Custom)
             try {
                 \App\Services\WebhookNotificationService::notifyNewOrder($order);
@@ -266,7 +272,20 @@ class CheckoutController extends Controller
             } catch (\Exception $e) {
                 \Log::error('Failed to send new order admin notification: ' . $e->getMessage());
             }
+
+        } finally {
+            optional($lock)->release();
         }
+
+        return $this->redirectForPayment($order, $validated);
+    }
+
+    /**
+     * Handle redirection for free vs paid orders
+     */
+    protected function redirectForPayment(Order $order, array $validated): RedirectResponse
+    {
+        $finalPrice = (float) $order->amount;
 
         // Handle Free Orders (Price = 0)
         if ($finalPrice <= 0) {
@@ -286,12 +305,14 @@ class CheckoutController extends Controller
         }
 
         // Redirect based on payment method
-        if ($validated['payment_method'] === 'stripe') {
+        $paymentMethod = $validated['payment_method'] ?? $order->payment_method;
+
+        if ($paymentMethod === 'stripe') {
             \Log::info('CheckoutController: Redirecting to Stripe for order: ' . $order->order_number);
             return redirect()->route('stripe.checkout', $order->order_number);
         }
 
-        if ($validated['payment_method'] === 'crypto') {
+        if ($paymentMethod === 'crypto') {
             // Store selected currency in session for NOWPayments
             session(['crypto_currency' => $validated['crypto_currency'] ?? 'usdt']);
             

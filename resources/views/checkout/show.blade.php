@@ -48,6 +48,7 @@
                 
                 <form action="{{ route('checkout.process', $package->slug) }}" method="POST" class="checkout-form">
                     @csrf
+                    <input type="hidden" name="checkout_token" value="{{ $checkoutToken ?? session('checkout_submission_token') }}">
                     
                     <div class="form-section">
                         <h3 class="section-label">
