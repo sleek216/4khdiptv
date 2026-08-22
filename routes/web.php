@@ -159,8 +159,10 @@ Route::prefix($adminPath)->middleware(['admin', 'admin.module'])->name('admin.')
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
     Route::get('orders/search-user', [AdminOrderController::class, 'searchUser'])->name('orders.search-user'); // For searching user by email/name
-    Route::post('orders/bulk-status', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');
-    Route::post('orders/bulk-action', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-action');
+    Route::match(['POST', 'PUT'], 'orders/bulk-status', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');
+    Route::match(['POST', 'PUT'], 'orders/bulk-action', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-action');
+    Route::get('orders/bulk-status', fn() => redirect()->route('admin.orders.index'));
+    Route::get('orders/bulk-action', fn() => redirect()->route('admin.orders.index'));
     Route::post('orders', [AdminOrderController::class, 'store'])->name('orders.store');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::get('orders/{order}/edit', [AdminOrderController::class, 'edit'])->name('orders.edit');
@@ -208,6 +210,7 @@ Route::prefix($adminPath)->middleware(['admin', 'admin.module'])->name('admin.')
     Route::get('settings/webhooks', [AdminSettingsController::class, 'webhooks'])->name('settings.webhooks');
     Route::put('settings/webhooks', [AdminSettingsController::class, 'updateWebhooks'])->name('settings.update-webhooks');
     Route::post('settings/webhooks/test', [AdminSettingsController::class, 'testWebhooks'])->name('settings.test-webhooks');
+    Route::post('settings/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('settings.clear-cache');
 
     // Coupons Management
     Route::resource('coupons', AdminCouponController::class);

@@ -396,4 +396,18 @@ class SettingsController extends Controller
             ->route('admin.settings.webhooks')
             ->with('success', $message);
     }
+
+    public function clearCache(): RedirectResponse
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('cache:clear');
+            \Illuminate\Support\Facades\Artisan::call('view:clear');
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            \Illuminate\Support\Facades\Artisan::call('route:clear');
+
+            return redirect()->back()->with('success', 'All system caches (Application, Route, View, Config) cleared successfully!');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Failed to clear cache: ' . $e->getMessage());
+        }
+    }
 }
