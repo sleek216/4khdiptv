@@ -156,14 +156,14 @@ Route::prefix($adminPath)->middleware(['admin', 'admin.module'])->name('admin.')
 
     // Orders Management
     Route::post('orders/mark-all-read', [AdminOrderController::class, 'markAllRead'])->name('orders.mark-all-read');
-    Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::match(['GET', 'POST'], 'orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
     Route::get('orders/search-user', [AdminOrderController::class, 'searchUser'])->name('orders.search-user'); // For searching user by email/name
     Route::match(['POST', 'PUT'], 'orders/bulk-status', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');
     Route::match(['POST', 'PUT'], 'orders/bulk-action', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-action');
     Route::get('orders/bulk-status', fn() => redirect()->route('admin.orders.index'));
     Route::get('orders/bulk-action', fn() => redirect()->route('admin.orders.index'));
-    Route::post('orders', [AdminOrderController::class, 'store'])->name('orders.store');
+    Route::post('orders/store', [AdminOrderController::class, 'store'])->name('orders.store');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::get('orders/{order}/edit', [AdminOrderController::class, 'edit'])->name('orders.edit');
     Route::put('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');

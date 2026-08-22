@@ -60,7 +60,7 @@
     </form>
 </div>
 
-<form action="{{ route('admin.orders.bulk-status') }}" method="POST" id="bulkOrdersForm">
+<form action="{{ route('admin.orders.index') }}" method="POST" id="bulkOrdersForm">
     @csrf
     <input type="hidden" name="search" value="{{ request('search') }}">
     <input type="hidden" name="status" value="{{ request('status') }}">

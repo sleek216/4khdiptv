@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request)
     {
+        if ($request->isMethod('POST') || $request->has('bulk_action') || ($request->has('order_ids') && is_array($request->input('order_ids')))) {
+            return $this->bulkUpdateStatus($request);
+        }
+
         $query = Order::with(['user', 'package']);
 
         // Filter by status
@@ -156,6 +160,10 @@ class OrderController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if ($request->has('bulk_action') || ($request->has('order_ids') && is_array($request->input('order_ids')))) {
+            return $this->bulkUpdateStatus($request);
+        }
+
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'package_id' => 'required|exists:packages,id',
