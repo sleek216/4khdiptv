@@ -156,7 +156,7 @@ Route::prefix($adminPath)->middleware(['admin', 'admin.module'])->name('admin.')
 
     // Orders Management
     Route::post('orders/mark-all-read', [AdminOrderController::class, 'markAllRead'])->name('orders.mark-all-read');
-    Route::match(['GET', 'POST'], 'orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::match(['GET', 'POST', 'DELETE'], 'orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
     Route::get('orders/search-user', [AdminOrderController::class, 'searchUser'])->name('orders.search-user'); // For searching user by email/name
     Route::match(['POST', 'PUT'], 'orders/bulk-status', [AdminOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');

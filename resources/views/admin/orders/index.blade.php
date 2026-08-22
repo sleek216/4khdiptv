@@ -180,11 +180,7 @@
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
                                     <a href="{{ route('admin.orders.show', $order) }}" class="btn-xai-dark" style="padding: 6px 12px; font-size: 12px;">VIEW</a>
-                                    <form action="{{ route('admin.orders.destroy', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this order?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-xai-dark" style="padding: 6px 12px; font-size: 12px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">DELETE</button>
-                                    </form>
+                                    <button type="button" class="btn-xai-dark" style="padding: 6px 12px; font-size: 12px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" onclick="deleteSingleOrder('{{ route('admin.orders.destroy', $order) }}')">DELETE</button>
                                 </div>
                             </td>
                         </tr>
@@ -203,6 +199,11 @@
             {{ $orders->withQueryString()->links('pagination::bootstrap-5') }}
         </div>
     </div>
+</form>
+
+<form id="deleteSingleOrderForm" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
 </form>
 @endsection
 
@@ -330,6 +331,14 @@
         }
 
         return confirm(`Apply bulk changes to ${n} selected order(s)?`);
+    };
+
+    window.deleteSingleOrder = function (url) {
+        if (confirm('Are you sure you want to delete this order?')) {
+            const form = document.getElementById('deleteSingleOrderForm');
+            form.action = url;
+            form.submit();
+        }
     };
 })();
 </script>

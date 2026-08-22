@@ -16,7 +16,7 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->isMethod('POST') || $request->has('bulk_action') || ($request->has('order_ids') && is_array($request->input('order_ids')))) {
+        if ($request->isMethod('POST') || $request->isMethod('DELETE') || $request->has('bulk_action') || ($request->has('order_ids') && is_array($request->input('order_ids')))) {
             return $this->bulkUpdateStatus($request);
         }
 
