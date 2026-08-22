@@ -68,17 +68,19 @@
 
     <div class="xai-card-dark mb-4">
         <div class="d-flex flex-wrap align-items-end gap-3">
-            <div style="min-width: 180px;">
+            <div style="min-width: 220px;">
                 <label class="bulk-label">BULK ACTION</label>
                 <select name="bulk_action" id="bulkAction" class="bulk-select" required>
-                    <option value="order_status">Change order status</option>
-                    <option value="payment_status">Change payment status</option>
+                    <option value="both_status">Change Both (Order & Payment)</option>
+                    <option value="order_status">Change Order Status Only</option>
+                    <option value="payment_status">Change Payment Status Only</option>
+                    <option value="delete">Delete Selected</option>
                 </select>
             </div>
             <div style="min-width: 180px;" id="orderStatusWrap">
                 <label class="bulk-label">ORDER STATUS</label>
                 <select name="bulk_order_status" id="bulkOrderStatus" class="bulk-select">
-                    <option value="">Select...</option>
+                    <option value="">Select Order Status...</option>
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
                     <option value="completed">Completed</option>
@@ -86,10 +88,10 @@
                     <option value="expired">Expired</option>
                 </select>
             </div>
-            <div style="min-width: 180px; display: none;" id="paymentStatusWrap">
+            <div style="min-width: 180px;" id="paymentStatusWrap">
                 <label class="bulk-label">PAYMENT STATUS</label>
                 <select name="bulk_payment_status" id="bulkPaymentStatus" class="bulk-select">
-                    <option value="">Select...</option>
+                    <option value="">Select Payment Status...</option>
                     <option value="pending">Pending</option>
                     <option value="completed">Completed</option>
                     <option value="failed">Failed</option>
@@ -101,7 +103,7 @@
                 <span>Apply to selected</span>
             </button>
             <div style="margin-left: auto; color: var(--xai-text-muted); font-size: 13px;">
-                <span id="selectedCount">0</span> selected
+                <span id="selectedCount" style="font-weight: 700; color: var(--xai-text-primary);">0</span> selected
             </div>
         </div>
     </div>
@@ -252,11 +254,15 @@
     const payWrap = document.getElementById('paymentStatusWrap');
 
     function refreshCount() {
-        const n = boxes().filter(b => b.checked).length;
-        countEl.textContent = n;
+        const checkedList = boxes().filter(b => b.checked);
+        const n = checkedList.length;
+        const total = boxes().length;
+        if (countEl) {
+            countEl.textContent = n;
+        }
         if (selectAll) {
-            selectAll.checked = n > 0 && n === boxes().length;
-            selectAll.indeterminate = n > 0 && n < boxes().length;
+            selectAll.checked = n > 0 && n === total;
+            selectAll.indeterminate = n > 0 && n < total;
         }
     }
 
@@ -264,13 +270,30 @@
         boxes().forEach(b => b.checked = selectAll.checked);
         refreshCount();
     });
-    boxes().forEach(b => b.addEventListener('change', refreshCount));
+
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.classList.contains('order-checkbox')) {
+            refreshCount();
+        }
+    });
 
     function syncAction() {
-        const isPay = bulkAction.value === 'payment_status';
-        orderWrap.style.display = isPay ? 'none' : '';
-        payWrap.style.display = isPay ? '' : 'none';
+        const action = bulkAction ? bulkAction.value : 'both_status';
+        if (action === 'both_status') {
+            if (orderWrap) orderWrap.style.display = '';
+            if (payWrap) payWrap.style.display = '';
+        } else if (action === 'order_status') {
+            if (orderWrap) orderWrap.style.display = '';
+            if (payWrap) payWrap.style.display = 'none';
+        } else if (action === 'payment_status') {
+            if (orderWrap) orderWrap.style.display = 'none';
+            if (payWrap) payWrap.style.display = '';
+        } else if (action === 'delete') {
+            if (orderWrap) orderWrap.style.display = 'none';
+            if (payWrap) payWrap.style.display = 'none';
+        }
     }
+
     bulkAction?.addEventListener('change', syncAction);
     syncAction();
     refreshCount();
@@ -278,18 +301,35 @@
     window.confirmBulk = function () {
         const n = boxes().filter(b => b.checked).length;
         if (!n) {
-            alert('Please select at least one order.');
+            alert('Please select at least one order using the checkboxes.');
             return false;
         }
-        const action = bulkAction.value;
-        const status = action === 'payment_status'
-            ? document.getElementById('bulkPaymentStatus').value
-            : document.getElementById('bulkOrderStatus').value;
-        if (!status) {
-            alert('Please choose a status.');
+
+        const action = bulkAction ? bulkAction.value : 'both_status';
+
+        if (action === 'delete') {
+            return confirm(`Are you sure you want to permanently DELETE ${n} selected order(s)? This action cannot be undone.`);
+        }
+
+        const orderStatus = document.getElementById('bulkOrderStatus')?.value;
+        const payStatus = document.getElementById('bulkPaymentStatus')?.value;
+
+        if (action === 'order_status' && !orderStatus) {
+            alert('Please choose an Order Status to apply.');
             return false;
         }
-        return confirm(`Update ${n} selected order(s)?`);
+
+        if (action === 'payment_status' && !payStatus) {
+            alert('Please choose a Payment Status to apply.');
+            return false;
+        }
+
+        if (action === 'both_status' && !orderStatus && !payStatus) {
+            alert('Please choose at least one status (Order Status or Payment Status) to apply.');
+            return false;
+        }
+
+        return confirm(`Apply bulk changes to ${n} selected order(s)?`);
     };
 })();
 </script>

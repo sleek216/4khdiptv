@@ -260,24 +260,94 @@ class OrderController extends Controller
         $validated = $request->validate([
             'order_ids' => 'required|array|min:1',
             'order_ids.*' => 'exists:orders,id',
-            'bulk_order_status' => 'required|in:pending,processing,completed,cancelled',
+            'bulk_action' => 'nullable|in:both_status,order_status,payment_status,delete',
+            'bulk_order_status' => 'nullable|in:pending,processing,completed,cancelled,expired',
+            'bulk_payment_status' => 'nullable|in:pending,completed,failed,refunded',
         ]);
 
         $orders = Order::whereIn('id', $validated['order_ids'])->get();
-        $count = 0;
+        $count = $orders->count();
 
-        foreach ($orders as $order) {
-            $order->update(['order_status' => $validated['bulk_order_status']]);
+        if ($count === 0) {
+            return redirect()
+                ->route('admin.orders.index', $request->only(['search', 'status', 'payment_status']))
+                ->with('error', 'No valid orders selected.');
+        }
 
-            if ($validated['bulk_order_status'] === 'completed' && !$order->activated_at) {
-                $order->markAsCompleted();
+        $action = $validated['bulk_action'] ?? 'both_status';
+
+        if ($action === 'delete') {
+            foreach ($orders as $order) {
+                $order->countries()->detach();
+                $order->delete();
             }
 
-            $count++;
+            return redirect()
+                ->route('admin.orders.index', $request->only(['search', 'status', 'payment_status']))
+                ->with('success', "{$count} order(s) deleted successfully.");
+        }
+
+        $orderStatus = $validated['bulk_order_status'] ?? null;
+        $paymentStatus = $validated['bulk_payment_status'] ?? null;
+
+        if ($action === 'order_status' && empty($orderStatus)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Please select an order status.');
+        }
+
+        if ($action === 'payment_status' && empty($paymentStatus)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Please select a payment status.');
+        }
+
+        if ($action === 'both_status' && empty($orderStatus) && empty($paymentStatus)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Please select at least one status (Order Status or Payment Status) to update.');
+        }
+
+        foreach ($orders as $order) {
+            $updateData = [];
+
+            if (($action === 'order_status' || $action === 'both_status') && !empty($orderStatus)) {
+                $updateData['order_status'] = $orderStatus;
+            }
+
+            if (($action === 'payment_status' || $action === 'both_status') && !empty($paymentStatus)) {
+                $updateData['payment_status'] = $paymentStatus;
+            }
+
+            if (!empty($updateData)) {
+                $wasPaymentCompleted = $order->payment_status === 'completed';
+                $order->update($updateData);
+
+                // If order status is completed and not yet activated, activate it
+                if (($action === 'order_status' || $action === 'both_status') && $orderStatus === 'completed' && !$order->activated_at) {
+                    $order->markAsCompleted();
+                }
+
+                // If payment status was newly set to completed, process affiliate commission
+                if (($action === 'payment_status' || $action === 'both_status') && !$wasPaymentCompleted && $paymentStatus === 'completed') {
+                    $order->processAffiliateCommissionIfPaid();
+                }
+            }
+        }
+
+        if ($action === 'order_status') {
+            $msg = "Order status updated to \"" . strtoupper($orderStatus) . "\" for {$count} order(s).";
+        } elseif ($action === 'payment_status') {
+            $msg = "Payment status updated to \"" . strtoupper($paymentStatus) . "\" for {$count} order(s).";
+        } else {
+            $parts = [];
+            if ($orderStatus) $parts[] = "Order: " . strtoupper($orderStatus);
+            if ($paymentStatus) $parts[] = "Payment: " . strtoupper($paymentStatus);
+            $msg = "Updated (" . implode(', ', $parts) . ") for {$count} order(s).";
         }
 
         return redirect()
             ->route('admin.orders.index', $request->only(['search', 'status', 'payment_status']))
-            ->with('success', "Order status updated to \"{$validated['bulk_order_status']}\" for {$count} order(s).");
+            ->with('success', $msg);
     }
 }
