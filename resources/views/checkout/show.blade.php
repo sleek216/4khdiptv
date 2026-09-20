@@ -267,16 +267,16 @@
                 {{-- Card payment help modal --}}
                 @php
                     $crispWebsiteId = \App\Models\Setting::get('crisp_website_id');
-                    $cardHelpEmail = \App\Models\Setting::get('support_email', 'support@4khdiptv.org');
-                    $foreignMail = ['bestlive', 'liveiptv', 'khdiptv.com'];
+                    $cardHelpEmail = \App\Models\Setting::get('support_email', 'support@4khdiptv.net');
+                    $foreignMail = ['bestlive', 'liveiptv', 'khdiptv.com', 'khdiptv.org'];
                     foreach ($foreignMail as $needle) {
                         if (stripos((string) $cardHelpEmail, $needle) !== false) {
-                            $cardHelpEmail = 'support@4khdiptv.org';
+                            $cardHelpEmail = 'support@4khdiptv.net';
                             break;
                         }
                     }
                     if (!filter_var($cardHelpEmail, FILTER_VALIDATE_EMAIL)) {
-                        $cardHelpEmail = 'support@4khdiptv.org';
+                        $cardHelpEmail = 'support@4khdiptv.net';
                     }
                 @endphp
                 <div id="cardPayModal" class="card-pay-modal" hidden>

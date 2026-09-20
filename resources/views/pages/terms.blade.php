@@ -121,7 +121,7 @@
                     <h2>10. Reach Us</h2>
                     <p>Questions about these terms? Contact us:</p>
                     <ul>
-                        <li>Email: support@4khdiptv.org</li>
+                        <li>Email: support@4khdiptv.net</li>
                         <li>Contact Form: <a href="{{ route('contact') }}">Contact Page</a></li>
                     </ul>
                 </section>

@@ -158,7 +158,7 @@
             <div>
                 <div class="brand">4khdiptv</div>
                 <div>Premium IPTV Service</div>
-                <div>support@4khdiptv.com</div>
+                <div>support@4khdiptv.net</div>
             </div>
             <div>
                 <div class="invoice-title">BILL</div>

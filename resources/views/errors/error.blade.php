@@ -51,7 +51,7 @@
                 <a href="{{ url('/') }}" class="btn btn-outline">
                     <i class="ph ph-house"></i> Back to Homepage
                 </a>
-                <a href="mailto:support@4khdiptv.org" class="btn btn-outline">
+                <a href="mailto:support@4khdiptv.net" class="btn btn-outline">
                     <i class="ph ph-envelope"></i> Email Us Directly
                 </a>
             </div>

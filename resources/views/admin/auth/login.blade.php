@@ -262,7 +262,7 @@
                     id="email" 
                     name="email" 
                     class="form-control-custom" 
-                    placeholder="admin@4khdiptv.org" 
+                    placeholder="admin@4khdiptv.net" 
                     value="{{ old('email') }}" 
                     required 
                     autofocus

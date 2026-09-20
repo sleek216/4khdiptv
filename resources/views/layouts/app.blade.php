@@ -580,7 +580,7 @@
 
                 <!-- Contact Us -->
                 @php
-                    $footerEmail = 'support@4khdiptv.org';
+                    $footerEmail = 'support@4khdiptv.net';
                     $footerWhatsapp = \App\Models\Setting::get('whatsapp_number');
                     $footerPhoneDisplay = \App\Models\Setting::get('support_phone', $footerWhatsapp ?: '');
                     $crispFooter = \App\Models\Setting::get('crisp_website_id');

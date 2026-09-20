@@ -5,7 +5,7 @@
 @section('content')
 
 @php
-    $supportEmail = 'support@4khdiptv.org';
+    $supportEmail = 'support@4khdiptv.net';
     $whatsapp = \App\Models\Setting::get('whatsapp_number');
     $supportPhone = \App\Models\Setting::get('support_phone', $whatsapp ?: '');
     $crispId = \App\Models\Setting::get('crisp_website_id');

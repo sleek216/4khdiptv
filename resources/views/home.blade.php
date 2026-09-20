@@ -29,7 +29,7 @@
         ['question' => 'What devices can I watch on?', 'answer' => 'Yes. Watch on multiple devices at same time — Smart TV, Fire Stick, phone, tablet, and computer.'],
         ['question' => 'How fast can I start watching?', 'answer' => 'Most customers are streaming within a few minutes. Create an account, pick a plan, and follow the simple setup guide for your device.'],
         ['question' => 'Do you offer HD and 4K channels?', 'answer' => 'Yes. Enjoy thousands of channels in HD and 4K where available, plus a large VOD library of movies and series.'],
-        ['question' => 'Is support available if I need help?', 'answer' => 'Yes. Our support team is available 24/7 by email at support@4khdiptv.org and live chat on the website.'],
+        ['question' => 'Is support available if I need help?', 'answer' => 'Yes. Our support team is available 24/7 by email at support@4khdiptv.net and live chat on the website.'],
         ['question' => 'Can I try before I buy?', 'answer' => 'Yes. Start with a free trial (when available) or choose a short plan to test quality, speed, and channel lineup.'],
         ['question' => 'What payment methods do you accept?', 'answer' => 'We accept card and crypto payments at checkout. After payment you receive your subscription details by email.'],
     ];

@@ -138,8 +138,8 @@
                     <h2>10. Contact</h2>
                     <p>Questions about this privacy notice or our data practices? Contact us:</p>
                     <ul>
-                        <li>Email: privacy@4khdiptv.org</li>
-                        <li>Support: support@4khdiptv.org</li>
+                        <li>Email: privacy@4khdiptv.net</li>
+                        <li>Support: support@4khdiptv.net</li>
                         <li>Contact Form: <a href="{{ route('contact') }}">Contact Page</a></li>
                     </ul>
                 </section>

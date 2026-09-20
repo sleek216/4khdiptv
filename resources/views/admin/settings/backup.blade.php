@@ -114,7 +114,7 @@
                             <input type="email" class="{{ $errors->has('backup_export_email') ? 'is-invalid' : '' }}"
                                    id="backup_export_email" name="backup_export_email"
                                    value="{{ old('backup_export_email', $backupSettings['backup_export_email']) }}"
-                                   required placeholder="admin@4khdiptv.org"
+                                   required placeholder="admin@4khdiptv.net"
                                    style="border: none; background: transparent; width: 100%; outline: none; font-size: 14px; color: var(--xai-text-primary); padding: 10px 0;">
                         </div>
                         <div style="font-family: var(--font-display); font-size: 11px; color: var(--xai-text-muted); margin-top: 6px;">
