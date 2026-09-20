@@ -13,7 +13,7 @@ class SettingsController extends Controller
     public function index(): View
     {
         $settings = [
-            'whatsapp_number' => Setting::get('whatsapp_number', ''),
+            'whatsapp_number' => Setting::get('whatsapp_number', '') ?: Setting::get('whatsapp', ''),
             'crisp_website_id' => Setting::get('crisp_website_id', ''),
         ];
 
@@ -23,12 +23,17 @@ class SettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'whatsapp_number' => 'nullable|string|max:20',
+            'whatsapp_number' => 'nullable|string|max:30',
             'crisp_website_id' => 'nullable|string|max:255',
         ]);
 
         foreach ($validated as $key => $value) {
             Setting::set($key, $value ?? '');
+        }
+
+        // Keep 'whatsapp' and 'whatsapp_number' keys synchronized in DB and cache
+        if (array_key_exists('whatsapp_number', $validated)) {
+            Setting::set('whatsapp', $validated['whatsapp_number'] ?? '');
         }
 
         return redirect()

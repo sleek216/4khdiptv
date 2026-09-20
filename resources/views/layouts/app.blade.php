@@ -362,6 +362,294 @@
         .brand-logo-chip.netflix { color: #E50914; letter-spacing: 2px; }
         .brand-logo-chip.disney { color: #fff; font-weight: 600; letter-spacing: 1px; }
         .brand-logo-chip.prime { color: #00A8E1; }
+
+        /* =======================================================
+           Floating WhatsApp Support Widget (Positioned above Crisp)
+           ======================================================= */
+        .whatsapp-widget {
+            position: fixed;
+            right: 22px;
+            bottom: 24px;
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .whatsapp-widget.has-crisp {
+            bottom: 92px !important; /* Floats directly above Crisp's bottom-right chat bubble */
+        }
+        .whatsapp-float-btn {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: #ffffff !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
+            text-decoration: none !important;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            user-select: none;
+        }
+        .whatsapp-float-btn:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 14px 32px rgba(37, 211, 102, 0.55), 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .wa-icon-holder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        .wa-pulse-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid #25D366;
+            animation: waPulseRing 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+            pointer-events: none;
+        }
+        @keyframes waPulseRing {
+            0% { transform: scale(0.95); opacity: 0.85; }
+            70% { transform: scale(1.35); opacity: 0; }
+            100% { transform: scale(1.35); opacity: 0; }
+        }
+        .wa-badge-dot {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 13px;
+            height: 13px;
+            background: #10b981;
+            border: 2.5px solid #0b0f19;
+            border-radius: 50%;
+            z-index: 3;
+            box-shadow: 0 0 8px #10b981;
+        }
+        .wa-tooltip-tag {
+            position: absolute;
+            right: 68px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            padding: 7px 14px;
+            border-radius: 99px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(10px);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .whatsapp-widget:hover .wa-tooltip-tag {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+        .whatsapp-widget.is-open .wa-tooltip-tag {
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        /* Popup Card */
+        .wa-popup-card {
+            position: absolute;
+            bottom: 68px;
+            right: 0;
+            width: 300px;
+            background: #0d1117;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px) scale(0.94);
+            transform-origin: bottom right;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(37, 211, 102, 0.25);
+            z-index: 10;
+        }
+        .whatsapp-widget.is-open .wa-popup-card {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .wa-card-header {
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+        .wa-avatar-wrap {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .wa-status-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background: #25D366;
+            border: 2px solid #075E54;
+            border-radius: 50%;
+        }
+        .wa-card-title-group {
+            flex: 1;
+            min-width: 0;
+        }
+        .wa-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+        .wa-card-subtitle {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 2px;
+        }
+        .wa-live-indicator {
+            width: 6px;
+            height: 6px;
+            background: #25D366;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px #25D366;
+        }
+        .wa-close-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.2s;
+        }
+        .wa-close-btn:hover {
+            color: #ffffff;
+        }
+        .wa-card-content {
+            padding: 14px 16px;
+            background: #0d1117;
+        }
+        .wa-chat-bubble {
+            background: #1e293b;
+            border-radius: 12px 12px 12px 2px;
+            padding: 10px 12px;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .wa-bubble-text {
+            font-size: 12px;
+            line-height: 1.45;
+            color: #e2e8f0;
+            margin: 0;
+        }
+        .wa-bubble-time {
+            display: block;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.45);
+            text-align: right;
+            margin-top: 4px;
+        }
+        .wa-number-badge {
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(37, 211, 102, 0.1);
+            color: #25D366;
+            border: 1px solid rgba(37, 211, 102, 0.25);
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .wa-card-action {
+            padding: 10px 16px 14px;
+            background: #0d1117;
+        }
+        .wa-chat-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: #ffffff !important;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 10px;
+            text-decoration: none !important;
+            box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+            transition: all 0.25s ease;
+        }
+        .wa-chat-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+            filter: brightness(1.05);
+        }
+
+        /* Adjust coupon float so it never collides with Crisp or WhatsApp */
+        #coupon-float {
+            right: 88px !important;
+            bottom: 24px !important;
+        }
+
+        @media (max-width: 768px) {
+            .whatsapp-widget {
+                right: 16px !important;
+                bottom: 20px !important;
+            }
+            .whatsapp-widget.has-crisp {
+                bottom: 84px !important;
+            }
+            .whatsapp-float-btn {
+                width: 48px !important;
+                height: 48px !important;
+            }
+            .whatsapp-float-btn svg {
+                width: 26px !important;
+                height: 26px !important;
+            }
+            .wa-popup-card {
+                right: -6px;
+                width: 280px;
+                bottom: 58px;
+            }
+            #coupon-float {
+                right: 76px !important;
+                bottom: 18px !important;
+            }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -581,7 +869,7 @@
                 <!-- Contact Us -->
                 @php
                     $footerEmail = 'support@4khdiptv.net';
-                    $footerWhatsapp = \App\Models\Setting::get('whatsapp_number');
+                    $footerWhatsapp = \App\Models\Setting::get('whatsapp_number') ?: \App\Models\Setting::get('whatsapp');
                     $footerPhoneDisplay = \App\Models\Setting::get('support_phone', $footerWhatsapp ?: '');
                     $crispFooter = \App\Models\Setting::get('crisp_website_id');
                 @endphp
@@ -643,14 +931,65 @@
         </div>
     </footer>
 
-    <!-- WhatsApp Chat -->
+    <!-- WhatsApp Floating Support Widget -->
     @php
-        $whatsappNumber = \App\Models\Setting::get('whatsapp_number');
+        $whatsappNumber = \App\Models\Setting::get('whatsapp_number') ?: \App\Models\Setting::get('whatsapp');
+        $cleanWhatsapp = $whatsappNumber ? preg_replace('/\D+/', '', $whatsappNumber) : '';
+        $hasCrisp = !empty(\App\Models\Setting::get('crisp_website_id'));
     @endphp
-    @if($whatsappNumber)
-    <a href="https://wa.me/{{ $whatsappNumber }}" class="whatsapp-float" target="_blank" rel="noopener noreferrer">
-        <i class="ph-fill ph-whatsapp-logo"></i>
-    </a>
+
+    @if($whatsappNumber && $cleanWhatsapp)
+    <div id="whatsappWidget" class="whatsapp-widget {{ $hasCrisp ? 'has-crisp' : '' }}">
+        {{-- Interactive Popup Card with agent status and direct chat --}}
+        <div class="wa-popup-card" id="waPopupCard">
+            <div class="wa-card-header">
+                <div class="wa-avatar-wrap">
+                    <div class="wa-avatar-icon">
+                        <svg viewBox="0 0 32 32" width="22" height="22" fill="#ffffff">
+                            <path d="M16 2C8.28 2 2 8.28 2 16c0 2.61.71 5.06 1.94 7.17L2 30l6.99-1.91A13.93 13.93 0 0 0 16 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm0 25.54c-2.31 0-4.47-.64-6.33-1.74l-.45-.27-4.69 1.28 1.25-4.57-.29-.47A11.48 11.48 0 0 1 4.46 16c0-6.36 5.18-11.54 11.54-11.54 6.36 0 11.54 5.18 11.54 11.54 0 6.36-5.18 11.54-11.54 11.54zm6.33-8.63c-.35-.17-2.06-1.02-2.38-1.13-.32-.12-.55-.17-.78.17-.23.35-.9 1.13-1.1 1.36-.2.23-.41.26-.75.09-.35-.17-1.46-.54-2.79-1.72-1.03-.92-1.73-2.05-1.93-2.4-.2-.35-.02-.53.15-.71.16-.16.35-.41.52-.61.17-.2.23-.35.35-.58.12-.23.06-.44-.03-.61-.09-.17-.78-1.89-1.07-2.59-.28-.68-.57-.59-.78-.6h-.67c-.23 0-.61.09-.93.44-.32.35-1.22 1.19-1.22 2.9 0 1.72 1.25 3.38 1.43 3.61.17.23 2.46 3.76 5.96 5.27.83.36 1.48.57 1.99.73.84.27 1.6.23 2.21.14.67-.1 2.06-.84 2.35-1.65.29-.82.29-1.52.2-1.66-.08-.15-.31-.24-.66-.41z"/>
+                        </svg>
+                    </div>
+                    <span class="wa-status-dot"></span>
+                </div>
+                <div class="wa-card-title-group">
+                    <div class="wa-card-title">4khdiptv Support</div>
+                    <div class="wa-card-subtitle">
+                        <span class="wa-live-indicator"></span>
+                        <span>Online &bull; Instant Reply</span>
+                    </div>
+                </div>
+                <button type="button" class="wa-close-btn" id="waCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="wa-card-content">
+                <div class="wa-chat-bubble">
+                    <p class="wa-bubble-text">👋 Hello! Need help with IPTV setup, channel list, or instant renewal?</p>
+                    <span class="wa-bubble-time">{{ date('h:i A') }}</span>
+                </div>
+                <div class="wa-number-badge">
+                    <i class="ph-bold ph-whatsapp-logo"></i>
+                    <span>{{ $whatsappNumber }}</span>
+                </div>
+            </div>
+            <div class="wa-card-action">
+                <a href="https://wa.me/{{ $cleanWhatsapp }}?text={{ rawurlencode('Hello 4khdiptv support, I need help with IPTV service.') }}" target="_blank" rel="noopener noreferrer" class="wa-chat-action-btn">
+                    <span>Chat on WhatsApp</span>
+                    <i class="ph-bold ph-paper-plane-right"></i>
+                </a>
+            </div>
+        </div>
+
+        {{-- Main Floating Button (Direct tap on mobile, toggles card or opens on desktop) --}}
+        <a href="https://wa.me/{{ $cleanWhatsapp }}?text={{ rawurlencode('Hello 4khdiptv support, I need help with IPTV service.') }}" class="whatsapp-float-btn" id="waFloatBtn" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Support">
+            <span class="wa-pulse-ring"></span>
+            <span class="wa-icon-holder">
+                <svg viewBox="0 0 32 32" width="30" height="30" fill="#ffffff">
+                    <path d="M16 2C8.28 2 2 8.28 2 16c0 2.61.71 5.06 1.94 7.17L2 30l6.99-1.91A13.93 13.93 0 0 0 16 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm0 25.54c-2.31 0-4.47-.64-6.33-1.74l-.45-.27-4.69 1.28 1.25-4.57-.29-.47A11.48 11.48 0 0 1 4.46 16c0-6.36 5.18-11.54 11.54-11.54 6.36 0 11.54 5.18 11.54 11.54 0 6.36-5.18 11.54-11.54 11.54zm6.33-8.63c-.35-.17-2.06-1.02-2.38-1.13-.32-.12-.55-.17-.78.17-.23.35-.9 1.13-1.1 1.36-.2.23-.41.26-.75.09-.35-.17-1.46-.54-2.79-1.72-1.03-.92-1.73-2.05-1.93-2.4-.2-.35-.02-.53.15-.71.16-.16.35-.41.52-.61.17-.2.23-.35.35-.58.12-.23.06-.44-.03-.61-.09-.17-.78-1.89-1.07-2.59-.28-.68-.57-.59-.78-.6h-.67c-.23 0-.61.09-.93.44-.32.35-1.22 1.19-1.22 2.9 0 1.72 1.25 3.38 1.43 3.61.17.23 2.46 3.76 5.96 5.27.83.36 1.48.57 1.99.73.84.27 1.6.23 2.21.14.67-.1 2.06-.84 2.35-1.65.29-.82.29-1.52.2-1.66-.08-.15-.31-.24-.66-.41z"/>
+                </svg>
+            </span>
+            <span class="wa-badge-dot"></span>
+            <span class="wa-tooltip-tag">WhatsApp Support</span>
+        </a>
+    </div>
     @endif
 
     <!-- Scripts -->
@@ -744,6 +1083,53 @@
             sessionStorage.setItem('announce_toast_dismissed', '1');
             setTimeout(function () { toast.remove(); }, 500);
         }
+    </script>
+
+    {{-- WhatsApp Floating Widget Script --}}
+    <script>
+        (function() {
+            const widget = document.getElementById('whatsappWidget');
+            const floatBtn = document.getElementById('waFloatBtn');
+            const closeBtn = document.getElementById('waCloseBtn');
+            if (!widget || !floatBtn) return;
+
+            let isMobile = window.innerWidth <= 768;
+            window.addEventListener('resize', function() {
+                isMobile = window.innerWidth <= 768;
+            });
+
+            floatBtn.addEventListener('click', function(e) {
+                if (!isMobile) {
+                    e.preventDefault();
+                    widget.classList.toggle('is-open');
+                }
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    widget.classList.remove('is-open');
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (!widget.contains(e.target)) {
+                    widget.classList.remove('is-open');
+                }
+            });
+
+            if (window.$crisp) {
+                $crisp.push(["on", "chat:opened", function() {
+                    widget.style.opacity = '0';
+                    widget.style.pointerEvents = 'none';
+                }]);
+                $crisp.push(["on", "chat:closed", function() {
+                    widget.style.opacity = '1';
+                    widget.style.pointerEvents = 'auto';
+                }]);
+            }
+        })();
     </script>
 </body>
 </html>
